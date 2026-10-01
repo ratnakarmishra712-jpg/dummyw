@@ -15,8 +15,10 @@ This is an **incremental build**. What's implemented and working today:
 - ✅ Full SQLite data model (SQLAlchemy 2.0) + Alembic migrations
 - ✅ Orchestrator: phase sequencing, per-phase retry/error isolation,
   `--phases` subset selection, authorization gate
-- ✅ **Phase 1**: `subfinder` + `ffuf`
-  (subdomain discovery + content bruteforce with sensitive-file flagging)
+- ✅ **Phase 1**: a built-in crawler (no external tools — fetches the target,
+  extracts links/forms/params/JS into `assets`, stores pages as
+  `http_transactions`), plus `subfinder` + `ffuf` (subdomain discovery + content
+  bruteforce with sensitive-file flagging)
 - ✅ **Phase 2**: `mitmproxy` capture addon (logs every request/response +
   WebSocket message into `http_transactions`) and Playwright auth capture
   (persists `storage_state` per role into `auth_contexts`)

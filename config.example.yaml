@@ -68,6 +68,13 @@ api_keys:
   # securitytrails: "${SECURITYTRAILS_API_KEY}"
   {}
 
+# --- Phase 1: built-in crawler -----------------------------------------------
+# Runs with no external tools: fetches the target, extracts links/forms/params/JS
+# into assets, and stores fetched pages as transactions (feeds Phases 3/4/5).
+crawl:
+  max_pages: 50
+  max_depth: 2
+
 # --- Phase 2: traffic interception -------------------------------------------
 proxy:
   listen_host: "127.0.0.1"

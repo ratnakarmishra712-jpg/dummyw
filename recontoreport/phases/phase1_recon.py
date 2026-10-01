@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 from sqlalchemy import select
 
 from ..db import session_scope
-from ..models import Asset, Finding, Target
+from ..models import Asset, Finding, HttpTransaction, Target
 from ..schema import (
     SENSITIVE_FILE_MARKERS,
     AssetType,
@@ -34,6 +34,7 @@ from ..schema import (
     FindingStatus,
     Severity,
 )
+from ..tools.crawler import crawl, parse_html
 from ..tools.runner import ToolNotFoundError, run
 from .base import Phase, PhaseResult
 
@@ -222,6 +223,86 @@ class ReconPhase(Phase):
         self.log.info("ffuf: %s new assets, %s findings", assets_created, findings_created)
         return assets_created, findings_created
 
+    # -- built-in crawler ----------------------------------------------------
+    def _run_crawler(self, errors: list[str]) -> int:
+        """Crawl the target, store pages as transactions and discovered URLs as assets.
+
+        Runs without external tools so a bare `--url` scan still produces an
+        attack surface for later phases.
+        """
+        crawl_cfg = getattr(self.config, "crawl", None) or {}
+        max_pages = int((crawl_cfg or {}).get("max_pages", 50))
+        max_depth = int((crawl_cfg or {}).get("max_depth", 2))
+
+        try:
+            pages = crawl(
+                self.config.target_url,
+                in_scope=self.config.scope.in_scope,
+                max_pages=max_pages,
+                max_depth=max_depth,
+            )
+        except Exception as exc:
+            errors.append(f"crawler: {type(exc).__name__}: {exc}")
+            return 0
+
+        if not pages:
+            errors.append("crawler: fetched no pages (target unreachable or out of scope?)")
+            return 0
+
+        created = 0
+        with session_scope(self.ctx.session_factory) as s:
+            for page in pages:
+                parsed_qs = urlparse(page.url).query
+                atype = (
+                    AssetType.API_ROUTE.value if parsed_qs else
+                    (AssetType.FILE.value if "." in Path(urlparse(page.url).path).name
+                     else AssetType.ENDPOINT.value)
+                )
+                if self._store_asset(
+                    s, type=atype, url=page.url, method="GET", source_tool="crawler",
+                    meta={"status_code": page.status, "has_params": bool(parsed_qs)},
+                ):
+                    created += 1
+                # Persist the fetched page so later phases have bodies to analyze.
+                s.add(HttpTransaction(
+                    target_id=self.ctx.target_id,
+                    tool_source="crawler",
+                    method="GET",
+                    url=page.url,
+                    status_code=page.status,
+                    response_headers=page.headers or None,
+                    response_body=(page.body[:200_000] if page.body else None),
+                    response_length=len(page.body) if page.body else None,
+                ))
+                # Expand links/forms/scripts into assets.
+                if page.body:
+                    parsed = parse_html(page.url, page.body)
+                    for js in parsed.scripts:
+                        if self.config.scope.in_scope(urlparse(js).hostname or ""):
+                            if self._store_asset(s, type=AssetType.JS_FILE.value, url=js,
+                                                  source_tool="crawler", meta=None):
+                                created += 1
+                    for link in parsed.links:
+                        if not link.startswith(("http://", "https://")):
+                            continue
+                        if not self.config.scope.in_scope(urlparse(link).hostname or ""):
+                            continue
+                        has_q = bool(urlparse(link).query)
+                        lt = AssetType.API_ROUTE.value if has_q else AssetType.ENDPOINT.value
+                        if self._store_asset(s, type=lt, url=link, method="GET",
+                                             source_tool="crawler",
+                                             meta={"has_params": has_q}):
+                            created += 1
+                    for form in parsed.forms:
+                        if self._store_asset(
+                            s, type=AssetType.API_ROUTE.value, url=form["action"],
+                            method=form["method"], source_tool="crawler",
+                            meta={"params": form["params"]},
+                        ):
+                            created += 1
+        self.log.info("crawler: %s pages, %s new assets", len(pages), created)
+        return created
+
     # -- stubs for the remaining Phase 1 tools -------------------------------
     def _run_amass(self, errors: list[str]) -> int:
         # TODO(phase1): amass enum -d <host> -json <out>, merge into subdomain assets.
@@ -249,6 +330,7 @@ class ReconPhase(Phase):
                 return self._result(ok=False, errors=["target row missing"])
 
         subs = self._run_subfinder(errors)
+        crawled = self._run_crawler(errors)
         ffuf_assets, findings = self._run_ffuf(errors)
 
         # Implemented-but-stubbed steps (no-ops for now).
@@ -256,7 +338,7 @@ class ReconPhase(Phase):
         self._run_openapi_ingest(errors)
         self._run_katana(errors)
 
-        assets_created = subs + ffuf_assets
+        assets_created = subs + crawled + ffuf_assets
         # Phase succeeds if at least one tool produced data OR nothing errored.
         ok = assets_created > 0 or not errors
         return self._result(
