@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report generated="{{ generated_at }}">
+  <target url="{{ target.url if target else '' }}" engagement="{{ target.engagement_ref if target else '' }}"/>
+  <summary total="{{ total_findings }}" assets="{{ asset_count }}">
+    {% for sev in severity_order %}<count severity="{{ sev }}">{{ counts.get(sev, 0) }}</count>
+    {% endfor %}
+  </summary>
+  <findings>
+    {% for f in findings %}
+    <finding severity="{{ f.severity }}" confidence="{{ f.confidence }}" status="{{ f.status }}">
+      <title>{{ f.title }}</title>
+      <cwe>{{ f.cwe_id or '' }}</cwe>
+      <owasp>{{ f.owasp_category or '' }}</owasp>
+      <source>{{ f.tool_source or '' }}</source>
+      {% if f.asset %}<asset>{{ f.asset.url }}</asset>{% endif %}
+      <description>{{ f.description or '' }}</description>
+      <poc>{{ f.poc_steps or '' }}</poc>
+      <remediation>{{ f.remediation or '' }}</remediation>
+    </finding>
+    {% endfor %}
+  </findings>
+  <assets>
+    {% for a in assets %}
+    <asset type="{{ a.type }}" method="{{ a.method or '' }}" source="{{ a.source_tool or '' }}">{{ a.url }}</asset>
+    {% endfor %}
+  </assets>
+</report>

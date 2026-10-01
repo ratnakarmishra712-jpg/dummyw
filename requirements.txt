@@ -1,0 +1,11 @@
+# Core runtime deps (pinned loosely; see pyproject.toml for the source of truth).
+# Install with:  pip install -e .
+# Optional phase extras:  pip install -e ".[proxy,browser,scan]"
+SQLAlchemy>=2.0,<3.0
+alembic>=1.13
+Jinja2>=3.1
+PyYAML>=6.0
+click>=8.1
+rich>=13.0
+prance>=23.6
+openapi-spec-validator>=0.7
