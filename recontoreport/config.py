@@ -171,6 +171,34 @@ class Config:
             source_path=path,
         )
 
+    @classmethod
+    def from_url(cls, url: str) -> "Config":
+        """Build a Config with sensible defaults from just a target URL.
+
+        Used when the CLI is invoked with --url and no --config file.
+        """
+        from urllib.parse import urlparse
+
+        url = url.strip()
+        host = urlparse(url).hostname or ""
+        include = [host, f"*.{host}"] if host else []
+        return cls(
+            target_url=url,
+            engagement_ref="",
+            scope=ScopeConfig(include=include, exclude=[], max_concurrency=4),
+            database_url="sqlite:///recontoreport.db",
+            output_dir=Path("./reports"),
+            output_formats=["html"],
+            tools={},
+            wordlists={},
+            nuclei={},
+            api_keys={},
+            phase_policy=PhasePolicy(),
+            proxy=ProxyConfig(),
+            auth_roles=[],
+            source_path=None,
+        )
+
     def tool(self, name: str) -> str:
         """Resolve a configured tool binary, defaulting to the bare name on $PATH."""
         return self.tools.get(name) or name

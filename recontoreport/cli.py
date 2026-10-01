@@ -58,8 +58,11 @@ def initdb(config_path: str) -> None:
 
 
 @main.command("run")
-@click.option("--config", "config_path", required=True, type=click.Path(exists=True))
-@click.option("--url", "url", default=None, help="Target website URL (overrides config target.url).")
+@click.option("--config", "config_path", default=None, type=click.Path(exists=True),
+              help="Config file. Optional if --url is given.")
+@click.option("--url", "url", default=None,
+              help="Target website URL. Used alone (no --config) for a quick scan, "
+                   "or with --config to override its target.url.")
 @click.option(
     "--phases", "phases_arg", default=None,
     help="Which phases to run: e.g. '1,2,3', '1 2 3', a single '3', or 'all'. "
@@ -87,16 +90,22 @@ def run(
     from urllib.parse import urlparse
     from .phases import resolve_phases
 
-    cfg = Config.load(config_path)
+    if not config_path and not url:
+        raise click.UsageError("provide --config <file> and/or --url <target>.")
 
-    # --url overrides the configured target, and auto-adds its host to scope so
-    # a quick one-off scan "just works".
-    if url:
-        cfg.target_url = url.strip()
-        host = urlparse(cfg.target_url).hostname or ""
-        if host and not cfg.scope.in_scope(host):
-            cfg.scope.include.extend([host, f"*.{host}"])
-            console.print(f"[yellow]Added '{host}' (and *.{host}) to scope for this run.[/]")
+    if config_path:
+        cfg = Config.load(config_path)
+        # --url overrides the configured target, auto-adding its host to scope.
+        if url:
+            cfg.target_url = url.strip()
+            host = urlparse(cfg.target_url).hostname or ""
+            if host and not cfg.scope.in_scope(host):
+                cfg.scope.include.extend([host, f"*.{host}"])
+                console.print(f"[yellow]Added '{host}' (and *.{host}) to scope for this run.[/]")
+    else:
+        # --url only: build a default config on the fly.
+        cfg = Config.from_url(url)
+        console.print("[dim]No --config given; using defaults (db: recontoreport.db, reports: ./reports).[/]")
 
     requested = parse_phase_arg(phases_arg, DEFAULT_PHASES)
     phase_numbers, auto_added = resolve_phases(requested)
@@ -148,10 +157,19 @@ def run(
 
 
 @main.command("report")
-@click.option("--config", "config_path", required=True, type=click.Path(exists=True))
-def report_cmd(config_path: str) -> None:
+@click.option("--config", "config_path", default=None, type=click.Path(exists=True),
+              help="Config file. Optional if --url is given.")
+@click.option("--url", "url", default=None, help="Target URL (uses default config).")
+def report_cmd(config_path: str | None, url: str | None) -> None:
     """Render a report from the existing data store (no scanning)."""
-    cfg = Config.load(config_path)
+    if not config_path and not url:
+        raise click.UsageError("provide --config <file> and/or --url <target>.")
+    if config_path:
+        cfg = Config.load(config_path)
+        if url:
+            cfg.target_url = url.strip()
+    else:
+        cfg = Config.from_url(url)
     orch = Orchestrator(cfg, authorized=False, init_db=False)
     _render(cfg, orch)
 
