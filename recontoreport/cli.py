@@ -176,9 +176,17 @@ def _render(cfg: Config, orch: Orchestrator) -> None:
 
     written = generate_reports(factory, target_id, cfg.output_dir, cfg.output_formats)
     for path in written:
-        console.print(f"[green]Report written:[/] {path}")
+        console.print(f"[green]Report written:[/] {path.resolve()}")
     if not written:
         console.print("[yellow]No report formats produced (check output.formats).[/]")
+        return written
+
+    # Call out the HTML report path on its own line so it's easy to copy / open.
+    html = next((p for p in written if p.suffix == ".html"), written[0])
+    console.print(f"\n[bold]Open the report:[/] [cyan]{html.resolve()}[/]")
+    console.print(f"[dim]  macOS:   open \"{html.resolve()}\"[/]")
+    console.print(f"[dim]  Linux:   xdg-open \"{html.resolve()}\"[/]")
+    return written
 
 
 if __name__ == "__main__":
