@@ -1,0 +1,105 @@
+# ReconToReport configuration (example).
+# Copy to config.yaml and edit. config.yaml is gitignored.
+#
+# IMPORTANT: this tool runs ACTIVE scans against the target. Only run it against
+# systems you are explicitly authorized to test. The CLI additionally requires
+# the --i-have-authorization flag before any active phase executes.
+
+target:
+  # Root scope. A single URL for now; the recon phase expands this into assets.
+  url: "https://example.com"
+  # Free-text note recorded in the DB and report (e.g. engagement/ticket ref).
+  engagement_ref: "CHANGE-ME: SOW-2026-001"
+
+scope:
+  # Hosts that are IN scope. Discovered assets outside these are recorded but
+  # never actively scanned. Supports exact hosts and *.wildcard suffixes.
+  include:
+    - "example.com"
+    - "*.example.com"
+  # Hosts explicitly OUT of scope even if they match an include rule.
+  exclude:
+    - "status.example.com"
+  # Hard cap on concurrent external tool processes.
+  max_concurrency: 4
+
+database:
+  # SQLite file. Relative paths resolve against the working directory.
+  url: "sqlite:///recontoreport.db"
+
+output:
+  # Where generated reports are written.
+  dir: "./reports"
+  formats: ["html"]   # "html" and/or "xml"
+
+# --- External tool locations -------------------------------------------------
+# Leave as the bare binary name to use $PATH, or set an absolute path.
+# NOTE: these tools are NOT bundled or installed by this project. See README.
+tools:
+  subfinder: "subfinder"
+  amass: "amass"
+  ffuf: "ffuf"
+  katana: "katana"
+  nuclei: "nuclei"
+  mitmproxy: "mitmdump"
+  sqlmap: "sqlmap"
+  # ... add others as phases are wired up.
+
+# --- Wordlists ---------------------------------------------------------------
+# REQUIRED for the ffuf directory-bruteforce step. No default is assumed — point
+# this at a wordlist you have on disk (e.g. a SecLists file). The run will error
+# out early with a clear message if the path is missing rather than guess.
+wordlists:
+  content_discovery: ""   # e.g. "/usr/share/seclists/Discovery/Web-Content/common.txt"
+
+# --- nuclei template sets (Phase 3) ------------------------------------------
+# No template set is bundled or selected by default. Set the directory/tags you
+# want once you reach Phase 3; left empty, the nuclei phase will refuse to run.
+nuclei:
+  templates_dir: ""       # e.g. "~/nuclei-templates"
+  tags: []                # e.g. ["owasp", "cve"]
+
+# --- API keys / secrets ------------------------------------------------------
+# Optional provider keys for discovery tools (e.g. subfinder sources). Leave
+# empty to run those tools in keyless mode. Prefer supplying these via env vars
+# referenced as ${ENV_VAR} rather than committing literal keys.
+api_keys:
+  # shodan: "${SHODAN_API_KEY}"
+  # securitytrails: "${SECURITYTRAILS_API_KEY}"
+  {}
+
+# --- Phase 2: traffic interception -------------------------------------------
+proxy:
+  listen_host: "127.0.0.1"
+  listen_port: 8080
+  # When no auth roles are configured, the proxy stays up this long so you can
+  # drive traffic through it manually (set your browser's proxy to the above).
+  capture_window_seconds: 60
+
+# --- Phase 2: authenticated sessions (Playwright) ----------------------------
+# Each role is logged in via Playwright (through the proxy) and its storage_state
+# saved to auth_contexts. Leave 'roles' empty to use passive capture instead.
+# Prefer ${ENV_VAR} for credentials rather than committing them literally.
+auth:
+  roles: []
+  # Example generic form login:
+  # - name: "low_priv"
+  #   privilege_level: 1
+  #   login_url: "https://example.com/login"
+  #   username: "${APP_LOW_PRIV_USER}"
+  #   password: "${APP_LOW_PRIV_PASS}"
+  #   username_selector: "input[name=email]"
+  #   password_selector: "input[name=password]"
+  #   submit_selector: "button[type=submit]"
+  #   success_selector: ".dashboard"      # optional: confirms login worked
+  # Example custom flow (for SSO/MFA/multi-step):
+  # - name: "admin"
+  #   privilege_level: 10
+  #   script: "./auth_flows/admin_login.py"   # must define login(page, role)
+
+phases:
+  # Per-phase retry policy used by the orchestrator.
+  retries: 1
+  retry_backoff_seconds: 3
+  # Timeout (seconds) applied to each external tool invocation.
+  tool_timeout: 600

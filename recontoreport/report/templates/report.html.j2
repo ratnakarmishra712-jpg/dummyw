@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vulnerability Assessment Report — {{ target.url if target else "unknown" }}</title>
+<style>
+  :root {
+    --critical: #7b1fa2; --high: #c62828; --medium: #ef6c00;
+    --low: #f9a825; --info: #1565c0; --fg: #1a1a1a; --muted: #666; --bd: #ddd;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+         color: var(--fg); margin: 0; padding: 0 16px; line-height: 1.5; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 0 64px; }
+  header h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  .meta { color: var(--muted); font-size: .9rem; }
+  .authz { background: #fff8e1; border: 1px solid #ffe082; padding: 10px 14px;
+           border-radius: 6px; margin: 16px 0; font-size: .85rem; }
+  .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+  .pill { padding: 6px 12px; border-radius: 20px; color: #fff; font-size: .85rem; }
+  .pill small { opacity: .85; }
+  .sev-critical { background: var(--critical); }
+  .sev-high { background: var(--high); }
+  .sev-medium { background: var(--medium); }
+  .sev-low { background: var(--low); color: #222; }
+  .sev-info { background: var(--info); }
+  h2.sevhead { margin-top: 32px; padding-bottom: 6px; border-bottom: 2px solid var(--bd); }
+  .finding { border: 1px solid var(--bd); border-left: 5px solid var(--bd);
+             border-radius: 6px; padding: 14px 16px; margin: 14px 0; }
+  .finding.crit { border-left-color: var(--critical); }
+  .finding.high { border-left-color: var(--high); }
+  .finding.med { border-left-color: var(--medium); }
+  .finding.low { border-left-color: var(--low); }
+  .finding.inf { border-left-color: var(--info); }
+  .finding h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .tags { font-size: .78rem; color: var(--muted); margin-bottom: 8px; }
+  .tags span { display: inline-block; background: #f3f3f3; border-radius: 4px;
+               padding: 2px 7px; margin-right: 6px; }
+  .field { margin: 8px 0; }
+  .field b { display: block; font-size: .8rem; text-transform: uppercase;
+             letter-spacing: .03em; color: var(--muted); }
+  pre { background: #f7f7f7; border: 1px solid var(--bd); border-radius: 4px;
+        padding: 10px; overflow-x: auto; font-size: .82rem; white-space: pre-wrap; }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; margin: 10px 0; }
+  th, td { border: 1px solid var(--bd); padding: 6px 8px; text-align: left; }
+  th { background: #fafafa; }
+  .empty { color: var(--muted); font-style: italic; }
+  footer { margin-top: 48px; color: var(--muted); font-size: .8rem;
+           border-top: 1px solid var(--bd); padding-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Vulnerability Assessment Report</h1>
+    <div class="meta">
+      Target: <strong>{{ target.url if target else "n/a" }}</strong><br>
+      {% if target and target.engagement_ref %}Engagement: {{ target.engagement_ref }}<br>{% endif %}
+      Generated: {{ generated_at }}
+    </div>
+  </header>
+
+  <div class="authz">
+    This assessment was performed under explicit written authorization from the
+    system owner. All testing was limited to the agreed scope.
+  </div>
+
+  <section>
+    <h2 class="sevhead">Summary</h2>
+    <div class="counts">
+      {% for sev in severity_order %}
+      <span class="pill sev-{{ sev }}">{{ sev|capitalize }} <small>{{ counts.get(sev, 0) }}</small></span>
+      {% endfor %}
+    </div>
+    <p>{{ total_findings }} finding(s) across {{ asset_count }} discovered asset(s).</p>
+  </section>
+
+  <section>
+    <h2 class="sevhead">Findings</h2>
+    {% if not grouped_findings %}
+      <p class="empty">No findings recorded.</p>
+    {% endif %}
+    {% set cls = {"critical":"crit","high":"high","medium":"med","low":"low","info":"inf"} %}
+    {% for sev in severity_order if grouped_findings.get(sev) %}
+      <h3>{{ sev|capitalize }} severity</h3>
+      {% for f in grouped_findings[sev] %}
+      <article class="finding {{ cls[sev] }}">
+        <h3>{{ f.title }}</h3>
+        <div class="tags">
+          {% if f.cwe_id %}<span>{{ f.cwe_id }}</span>{% endif %}
+          {% if f.owasp_category %}<span>{{ f.owasp_category }}</span>{% endif %}
+          <span>Confidence: {{ f.confidence }}</span>
+          <span>Source: {{ f.tool_source or "manual" }}</span>
+          <span>Status: {{ f.status }}</span>
+        </div>
+        {% if f.asset %}<div class="field"><b>Affected asset</b>{{ f.asset.url }}</div>{% endif %}
+        {% if f.description %}<div class="field"><b>Description</b>{{ f.description }}</div>{% endif %}
+        {% if f.poc_steps %}<div class="field"><b>Proof of concept</b><pre>{{ f.poc_steps }}</pre></div>{% endif %}
+        {% if f.remediation %}<div class="field"><b>Remediation</b>{{ f.remediation }}</div>{% endif %}
+      </article>
+      {% endfor %}
+    {% endfor %}
+  </section>
+
+  <section>
+    <h2 class="sevhead">Discovered assets</h2>
+    {% if assets %}
+    <table>
+      <thead><tr><th>Type</th><th>URL</th><th>Method</th><th>Source</th><th>In scope</th></tr></thead>
+      <tbody>
+      {% for a in assets %}
+        <tr>
+          <td>{{ a.type }}</td>
+          <td>{{ a.url }}</td>
+          <td>{{ a.method or "—" }}</td>
+          <td>{{ a.source_tool or "—" }}</td>
+          <td>{{ (a.meta or {}).get("in_scope", "—") }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty">No assets discovered.</p>
+    {% endif %}
+  </section>
+
+  {% if secrets %}
+  <section>
+    <h2 class="sevhead">Secret matches (unverified)</h2>
+    <p class="meta">Regex hits pending manual review — not promoted to findings.</p>
+    <table>
+      <thead><tr><th>Kind</th><th>Value</th><th>Context</th></tr></thead>
+      <tbody>
+      {% for s in secrets %}
+        <tr><td>{{ s.kind }}</td><td>{{ s.matched_value }}</td><td>{{ s.context or "" }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  <footer>
+    Generated by ReconToReport. For authorized security testing only.
+  </footer>
+</div>
+</body>
+</html>

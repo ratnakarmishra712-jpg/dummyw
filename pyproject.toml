@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recontoreport"
+version = "0.1.0"
+description = "CLI pipeline that orchestrates open-source tools into an authorized-pentest vulnerability report"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "ReconToReport contributors" }]
+keywords = ["security", "pentest", "recon", "authorized-testing"]
+
+dependencies = [
+    "SQLAlchemy>=2.0,<3.0",
+    "alembic>=1.13",
+    "Jinja2>=3.1",
+    "PyYAML>=6.0",
+    "click>=8.1",
+    "rich>=13.0",
+    "prance>=23.6",          # OpenAPI/Swagger ingestion (Phase 1)
+    "openapi-spec-validator>=0.7",  # prance backend
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+# Phases that need Python libraries (not just shelled-out CLIs) pull extras:
+proxy = ["mitmproxy>=10.0"]          # Phase 2
+browser = ["playwright>=1.44"]       # Phase 2/3
+scan = ["PyJWT>=2.8"]                # Phase 4 (jwt handling helpers)
+
+[project.scripts]
+recontoreport = "recontoreport.cli:main"
+r2r = "recontoreport.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["recontoreport*"]
+
+[tool.setuptools.package-data]
+recontoreport = ["report/templates/*.j2"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

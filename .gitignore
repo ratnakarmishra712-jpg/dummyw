@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ReconToReport local files
+config.yaml
+*.db
+/reports/
+.venv/
+.alembic_tmp.db
