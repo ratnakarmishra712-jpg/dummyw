@@ -24,7 +24,15 @@ import os
 # capture.py instead.
 from mitmproxy import http  # type: ignore
 
-from .capture import CapturedTransaction, save_transaction, session_factory_from_env
+# mitmproxy loads this file with `mitmdump -s mitm_addon.py` as a standalone
+# module (no parent package), so RELATIVE imports would fail. Use the absolute
+# package path, which resolves because recontoreport is pip-installed in the
+# same venv as this mitmdump.
+from recontoreport.tools.capture import (
+    CapturedTransaction,
+    save_transaction,
+    session_factory_from_env,
+)
 
 log = logging.getLogger("recontoreport.mitm")
 

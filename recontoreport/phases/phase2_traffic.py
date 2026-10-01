@@ -42,9 +42,15 @@ class TrafficPhase(Phase):
     active = True
 
     # -- proxy process -------------------------------------------------------
-    def _wait_for_port(self, host: str, port: int, timeout: float = 15.0) -> bool:
+    def _wait_for_port(
+        self, host: str, port: int, proc: subprocess.Popen, timeout: float = 15.0
+    ) -> bool:
         deadline = time.time() + timeout
         while time.time() < deadline:
+            # If mitmdump already exited (e.g. addon import error, port in use),
+            # stop waiting — the port will never open.
+            if proc.poll() is not None:
+                return False
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(1.0)
                 if s.connect_ex((host, port)) == 0:
@@ -72,12 +78,25 @@ class TrafficPhase(Phase):
             "-q",
         ]
         self.log.info("starting proxy: %s", " ".join(cmd))
-        proc = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-        if not self._wait_for_port(proxy.listen_host, proxy.listen_port):
-            proc.terminate()
+        proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if not self._wait_for_port(proxy.listen_host, proxy.listen_port, proc):
+            # Surface mitmdump's own output so the real cause is visible
+            # (addon import error, port already in use, cert prompt, etc.).
+            output = ""
+            if proc.poll() is not None and proc.stdout is not None:
+                output = proc.stdout.read() or ""
+            else:
+                proc.terminate()
+                try:
+                    output = proc.communicate(timeout=5)[0] or ""
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+            detail = output.strip().splitlines()[-5:] if output.strip() else []
             raise RuntimeError(
                 f"mitmdump did not start listening on "
-                f"{proxy.listen_host}:{proxy.listen_port} within timeout"
+                f"{proxy.listen_host}:{proxy.listen_port}."
+                + (f" mitmdump output:\n  " + "\n  ".join(detail) if detail else
+                   " (no output captured — check the port isn't already in use)")
             )
         return proc
 
