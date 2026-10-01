@@ -16,7 +16,12 @@ from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from urllib.parse import urldefrag, urljoin, urlparse
 
-USER_AGENT = "ReconToReport/0.1 (+authorized-testing)"
+# A browser-like UA: some servers block unknown/library user-agents with a 403
+# or a silent drop, which made the crawler look like the target was unreachable.
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 ReconToReport/0.1"
+)
 
 
 @dataclass
@@ -25,6 +30,7 @@ class Page:
     status: int | None
     headers: dict[str, str]
     body: str
+    error: str | None = None   # set on network-level failure (status is then None)
 
 
 @dataclass
@@ -74,7 +80,7 @@ def parse_html(base_url: str, html: str) -> ParsedLinks:
     return p.out
 
 
-def default_fetch(url: str, timeout: int = 15) -> Page | None:
+def default_fetch(url: str, timeout: int = 20) -> Page:
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
@@ -88,9 +94,10 @@ def default_fetch(url: str, timeout: int = 15) -> Page | None:
                 body=body if "text" in ctype or "json" in ctype or "html" in ctype else "",
             )
     except urllib.error.HTTPError as e:  # type: ignore[attr-defined]
+        # A real HTTP response (403/404/500/...) — keep it.
         return Page(url=url, status=e.code, headers={}, body="")
-    except Exception:
-        return None
+    except Exception as exc:  # network-level failure: DNS, timeout, TLS, refused
+        return Page(url=url, status=None, headers={}, body="", error=f"{type(exc).__name__}: {exc}")
 
 
 def crawl(
@@ -99,15 +106,17 @@ def crawl(
     fetch=default_fetch,
     max_pages: int = 50,
     max_depth: int = 2,
-) -> list[Page]:
-    """Breadth-first crawl, same-scope only. Returns the fetched pages.
+) -> tuple[list[Page], list[tuple[str, str]]]:
+    """Breadth-first crawl, same-scope only.
 
-    Callers read each Page's parsed links via :func:`parse_html` as needed; this
-    returns the raw pages so the phase can both persist transactions and expand
-    assets from one pass.
+    Returns (pages, errors): ``pages`` are fetches that got a real HTTP response
+    (any status, including 4xx/5xx); ``errors`` is a list of (url, message) for
+    network-level failures (DNS, timeout, TLS, connection refused) so callers can
+    report WHY nothing came back instead of a vague "unreachable".
     """
     seen: set[str] = set()
     pages: list[Page] = []
+    errors: list[tuple[str, str]] = []
     queue: deque[tuple[str, int]] = deque([(urldefrag(start_url)[0], 0)])
 
     while queue and len(pages) < max_pages:
@@ -119,7 +128,8 @@ def crawl(
         if not in_scope(host):
             continue
         page = fetch(url)
-        if page is None:
+        if page is None or page.status is None:
+            errors.append((url, (page.error if page else "fetch returned None") or "unknown error"))
             continue
         pages.append(page)
 
@@ -129,4 +139,4 @@ def crawl(
                 link = urldefrag(link)[0]
                 if link.startswith(("http://", "https://")) and link not in seen:
                     queue.append((link, depth + 1))
-    return pages
+    return pages, errors

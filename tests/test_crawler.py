@@ -44,8 +44,8 @@ def test_crawl_bfs_same_scope_with_fake_fetch():
     def in_scope(host):
         return host == "example.com"
 
-    pages = crawl("https://example.com/", in_scope=in_scope, fetch=fake_fetch,
-                  max_pages=50, max_depth=2)
+    pages, errors = crawl("https://example.com/", in_scope=in_scope, fetch=fake_fetch,
+                          max_pages=50, max_depth=2)
     urls = {p.url for p in pages}
     assert "https://example.com/" in urls
     assert "https://example.com/a" in urls
@@ -63,6 +63,18 @@ def test_crawl_respects_max_pages():
         body = f'<a href="/{n}0">x</a><a href="/{n}1">y</a>'
         return Page(url=url, status=200, headers={}, body=body)
 
-    pages = crawl("https://example.com/", in_scope=lambda h: True,
-                  fetch=fake_fetch, max_pages=5, max_depth=10)
+    pages, errors = crawl("https://example.com/", in_scope=lambda h: True,
+                          fetch=fake_fetch, max_pages=5, max_depth=10)
     assert len(pages) == 5
+
+
+def test_crawl_reports_network_errors():
+    from recontoreport.tools.crawler import Page
+
+    def failing_fetch(url, timeout=20):
+        return Page(url=url, status=None, headers={}, body="", error="TimeoutError: timed out")
+
+    pages, errors = crawl("https://down.example/", in_scope=lambda h: True,
+                          fetch=failing_fetch, max_pages=5, max_depth=1)
+    assert pages == []
+    assert errors and "TimeoutError" in errors[0][1]

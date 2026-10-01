@@ -269,7 +269,7 @@ class ReconPhase(Phase):
         max_depth = int((crawl_cfg or {}).get("max_depth", 2))
 
         try:
-            pages = crawl(
+            pages, crawl_errors = crawl(
                 self.config.target_url,
                 in_scope=self.config.scope.in_scope,
                 max_pages=max_pages,
@@ -280,7 +280,15 @@ class ReconPhase(Phase):
             return 0
 
         if not pages:
-            errors.append("crawler: fetched no pages (target unreachable or out of scope?)")
+            # Surface the real reason (timeout, DNS, TLS, 0 in scope) instead of a guess.
+            if crawl_errors:
+                url, msg = crawl_errors[0]
+                errors.append(f"crawler: could not fetch {url} — {msg}")
+            else:
+                errors.append(
+                    "crawler: nothing fetched — target host may be out of scope "
+                    f"(scope include={self.config.scope.include})"
+                )
             return 0
 
         created = 0
