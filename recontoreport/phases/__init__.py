@@ -11,9 +11,11 @@ def _load_registry() -> dict[int, type[Phase]]:
     # Imported lazily so that importing the package doesn't require every phase's
     # heavy optional dependencies (mitmproxy, playwright, ...).
     from .phase1_recon import ReconPhase
+    from .phase2_traffic import TrafficPhase
 
     registry: dict[int, type[Phase]] = {
         1: ReconPhase,
+        2: TrafficPhase,
     }
     # Phases 2-5 are registered here as their modules land.
     return registry

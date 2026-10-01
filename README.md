@@ -15,10 +15,13 @@ This is an **incremental build**. What's implemented and working today:
 - ✅ Full SQLite data model (SQLAlchemy 2.0) + Alembic migrations
 - ✅ Orchestrator: phase sequencing, per-phase retry/error isolation,
   `--phases` subset selection, authorization gate
-- ✅ **Phase 1 reference implementation**: `subfinder` + `ffuf`
+- ✅ **Phase 1**: `subfinder` + `ffuf`
   (subdomain discovery + content bruteforce with sensitive-file flagging)
+- ✅ **Phase 2**: `mitmproxy` capture addon (logs every request/response +
+  WebSocket message into `http_transactions`) and Playwright auth capture
+  (persists `storage_state` per role into `auth_contexts`)
 - ✅ Jinja2 HTML report (and XML) grouped by severity
-- ⏳ Phases 2–5 and the remaining Phase 1 tools (`amass`, `prance`/OpenAPI,
+- ⏳ Phases 3–5 and the remaining Phase 1 tools (`amass`, `prance`/OpenAPI,
   `katana`) are stubbed with `TODO` markers and a phase registry ready to
   accept them.
 
@@ -124,6 +127,39 @@ r2r run --config config.yaml --phases 1 --i-have-authorization
 # Render a report from the existing store without scanning
 r2r report --config config.yaml
 ```
+
+## Phase 2 — traffic capture & auth
+
+Needs the proxy/browser extras and a browser binary:
+
+```bash
+pip install -e ".[proxy,browser]"
+playwright install chromium
+```
+
+**Authenticated capture** — configure `auth.roles` in `config.yaml` (a login
+URL + form selectors, or a custom `script` exposing `login(page, role)` for
+SSO/MFA). Each role is logged in via Playwright through the proxy; its session
+is saved to `auth_contexts` and its traffic to `http_transactions`:
+
+```bash
+r2r run --config config.yaml --phases 2 --i-have-authorization
+```
+
+**Passive capture** — with no roles configured, the proxy stays up for
+`proxy.capture_window_seconds`. Point your browser (or another tool) at
+`http://127.0.0.1:8080` and drive traffic through it; everything is logged.
+
+The mitmproxy addon is also runnable standalone:
+
+```bash
+RECONTOREPORT_DB_URL="sqlite:////abs/path/recontoreport.db" \
+RECONTOREPORT_TARGET_ID=1 \
+mitmdump -s recontoreport/tools/mitm_addon.py --listen-port 8080
+```
+
+TLS interception uses Playwright's `ignore_https_errors`, so no mitmproxy CA
+install is required for the automated login flows.
 
 ## Adding a phase
 

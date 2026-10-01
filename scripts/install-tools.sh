@@ -46,7 +46,8 @@ install_go nuclei    github.com/projectdiscovery/nuclei/v3/cmd/nuclei
 echo
 echo "The following are not installed by this script — use your package manager:"
 echo "  amass      : https://github.com/owasp-amass/amass        (snap/brew/go)"
-echo "  mitmproxy  : pip install mitmproxy   (or: make dev)"
+echo "  mitmproxy  : pip install -e '.[proxy]'   (Phase 2)"
+echo "  playwright : pip install -e '.[browser]' && playwright install chromium  (Phase 2)"
 echo "  sqlmap     : https://github.com/sqlmapproject/sqlmap     (apt/brew/git)"
 echo "  hydra      : apt-get install hydra   /  brew install hydra"
 echo

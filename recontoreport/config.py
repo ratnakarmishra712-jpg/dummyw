@@ -62,6 +62,35 @@ class PhasePolicy:
 
 
 @dataclass
+class ProxyConfig:
+    listen_host: str = "127.0.0.1"
+    listen_port: int = 8080
+    # Passive capture window (seconds) used when no auth roles are configured:
+    # the proxy stays up this long so traffic can be driven through it manually.
+    capture_window_seconds: int = 60
+
+
+@dataclass
+class AuthRole:
+    """A login flow to record into an auth_context via Playwright.
+
+    The generic form-login path uses the *_selector fields. For flows that need
+    custom logic, set ``script`` to a Python file exposing ``login(page, role)``.
+    """
+
+    name: str
+    privilege_level: int = 0
+    login_url: str = ""
+    username: str = ""
+    password: str = ""
+    username_selector: str = "input[name=username]"
+    password_selector: str = "input[name=password]"
+    submit_selector: str = "button[type=submit]"
+    success_selector: str = ""   # optional: waited for to confirm login worked
+    script: str = ""             # optional: path to a custom login script
+
+
+@dataclass
 class Config:
     target_url: str
     engagement_ref: str
@@ -74,6 +103,8 @@ class Config:
     nuclei: dict[str, Any]
     api_keys: dict[str, str]
     phase_policy: PhasePolicy
+    proxy: ProxyConfig
+    auth_roles: list[AuthRole]
     source_path: Path | None = None
 
     @classmethod
@@ -89,9 +120,27 @@ class Config:
         db_raw = raw.get("database") or {}
         out_raw = raw.get("output") or {}
         phases_raw = raw.get("phases") or {}
+        proxy_raw = raw.get("proxy") or {}
+        auth_raw = raw.get("auth") or {}
 
         if not target.get("url"):
             raise ValueError("config: target.url is required")
+
+        auth_roles = [
+            AuthRole(
+                name=str(r.get("name") or f"role{i}"),
+                privilege_level=int(r.get("privilege_level", 0)),
+                login_url=str(r.get("login_url", "")),
+                username=str(r.get("username", "")),
+                password=str(r.get("password", "")),
+                username_selector=str(r.get("username_selector", "input[name=username]")),
+                password_selector=str(r.get("password_selector", "input[name=password]")),
+                submit_selector=str(r.get("submit_selector", "button[type=submit]")),
+                success_selector=str(r.get("success_selector", "")),
+                script=str(r.get("script", "")),
+            )
+            for i, r in enumerate(auth_raw.get("roles") or [])
+        ]
 
         return cls(
             target_url=str(target["url"]).strip(),
@@ -113,6 +162,12 @@ class Config:
                 retry_backoff_seconds=float(phases_raw.get("retry_backoff_seconds", 3.0)),
                 tool_timeout=int(phases_raw.get("tool_timeout", 600)),
             ),
+            proxy=ProxyConfig(
+                listen_host=str(proxy_raw.get("listen_host", "127.0.0.1")),
+                listen_port=int(proxy_raw.get("listen_port", 8080)),
+                capture_window_seconds=int(proxy_raw.get("capture_window_seconds", 60)),
+            ),
+            auth_roles=auth_roles,
             source_path=path,
         )
 

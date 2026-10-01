@@ -68,6 +68,35 @@ api_keys:
   # securitytrails: "${SECURITYTRAILS_API_KEY}"
   {}
 
+# --- Phase 2: traffic interception -------------------------------------------
+proxy:
+  listen_host: "127.0.0.1"
+  listen_port: 8080
+  # When no auth roles are configured, the proxy stays up this long so you can
+  # drive traffic through it manually (set your browser's proxy to the above).
+  capture_window_seconds: 60
+
+# --- Phase 2: authenticated sessions (Playwright) ----------------------------
+# Each role is logged in via Playwright (through the proxy) and its storage_state
+# saved to auth_contexts. Leave 'roles' empty to use passive capture instead.
+# Prefer ${ENV_VAR} for credentials rather than committing them literally.
+auth:
+  roles: []
+  # Example generic form login:
+  # - name: "low_priv"
+  #   privilege_level: 1
+  #   login_url: "https://example.com/login"
+  #   username: "${APP_LOW_PRIV_USER}"
+  #   password: "${APP_LOW_PRIV_PASS}"
+  #   username_selector: "input[name=email]"
+  #   password_selector: "input[name=password]"
+  #   submit_selector: "button[type=submit]"
+  #   success_selector: ".dashboard"      # optional: confirms login worked
+  # Example custom flow (for SSO/MFA/multi-step):
+  # - name: "admin"
+  #   privilege_level: 10
+  #   script: "./auth_flows/admin_login.py"   # must define login(page, role)
+
 phases:
   # Per-phase retry policy used by the orchestrator.
   retries: 1
