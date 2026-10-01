@@ -22,6 +22,35 @@ This is an **incremental build**. What's implemented and working today:
   `katana`) are stubbed with `TODO` markers and a phase registry ready to
   accept them.
 
+## Quick start (one command each)
+
+A `Makefile` wraps the whole workflow — everything runs inside a local `.venv`,
+no manual `source activate` needed. Run `make help` to see all targets.
+
+```bash
+make setup            # create venv + install the package
+make config           # create config.yaml from the example (then edit it)
+make db               # create/upgrade the database schema (Alembic)
+
+# install the external CLI tools (subfinder, ffuf, ...) — review the script first
+bash scripts/install-tools.sh
+make check-tools      # verify which tools are installed
+
+make run              # DRY RUN: active phases SKIPPED (no authorization)
+make scan             # AUTHORIZED run: active phases EXECUTE (needs permission!)
+make report           # render HTML/XML report from the store
+
+make query Q="SELECT title, severity FROM findings ORDER BY severity DESC"
+make test             # run the unit tests
+make clean            # remove venv, reports, caches
+```
+
+Override defaults inline, e.g. run a different phase subset or config file:
+
+```bash
+make scan PHASES=1 CONFIG=client-a.yaml
+```
+
 ## Architecture
 
 ```
