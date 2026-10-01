@@ -49,6 +49,24 @@ class ReconPhase(Phase):
         parsed = urlparse(self.config.target_url)
         return parsed.hostname or ""
 
+    def _registrable_domain(self) -> str:
+        """Domain to hand subfinder: the registrable/apex domain, not the full host.
+
+        subfinder enumerates subdomains OF the domain it's given, so passing
+        'www.itsecgames.com' would look for '*.www.itsecgames.com' (nothing).
+        We strip a leading 'www.' so 'www.itsecgames.com' -> 'itsecgames.com'.
+        Hosts that are already apex, or IPs, are returned unchanged.
+        """
+        host = self._target_host()
+        if not host:
+            return ""
+        # Leave IP addresses alone.
+        if all(part.isdigit() for part in host.split(".")):
+            return host
+        if host.startswith("www."):
+            return host[4:]
+        return host
+
     def _store_asset(self, session, **kwargs) -> bool:
         """Insert an asset if (type, url) is not already present. Returns True if new."""
         exists = session.execute(
@@ -64,14 +82,36 @@ class ReconPhase(Phase):
         return True
 
     # -- subfinder -----------------------------------------------------------
+    def _parse_subfinder_line(self, line: str) -> tuple[str, str | None]:
+        """Return (host, source) from a subfinder output line.
+
+        Tolerates both JSONL (``-json``) and plain host-per-line (``-silent``)
+        output so it works across subfinder versions.
+        """
+        line = line.strip()
+        if not line:
+            return "", None
+        if line.startswith("{"):
+            try:
+                rec = json.loads(line)
+                return (
+                    str(rec.get("host") or rec.get("input") or "").strip().lower(),
+                    rec.get("source"),
+                )
+            except json.JSONDecodeError:
+                return "", None
+        # Plain hostname line.
+        return line.lower(), None
+
     def _run_subfinder(self, errors: list[str]) -> int:
-        host = self._target_host()
-        if not host:
-            errors.append("subfinder: could not derive host from target.url")
+        domain = self._registrable_domain()
+        if not domain:
+            errors.append("subfinder: could not derive domain from target.url")
             return 0
 
         binary = self.config.tool("subfinder")
-        cmd = [binary, "-d", host, "-silent", "-json"]
+        cmd = [binary, "-d", domain, "-silent", "-json"]
+        self.log.info("subfinder: enumerating subdomains of %s", domain)
         try:
             res = run(cmd, timeout=self.config.phase_policy.tool_timeout)
         except ToolNotFoundError as exc:
@@ -85,16 +125,10 @@ class ReconPhase(Phase):
         created = 0
         with session_scope(self.ctx.session_factory) as s:
             for line in res.stdout.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                sub = (rec.get("host") or rec.get("input") or "").strip().lower()
+                sub, source = self._parse_subfinder_line(line)
                 if not sub:
                     continue
+                rec = {"source": source}
                 in_scope = self.config.scope.in_scope(sub)
                 new = self._store_asset(
                     s,
