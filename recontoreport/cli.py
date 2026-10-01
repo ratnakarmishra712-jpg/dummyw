@@ -93,11 +93,13 @@ def run(
     if not config_path and not url:
         raise click.UsageError("provide --config <file> and/or --url <target>.")
 
+    from .config import normalize_url
+
     if config_path:
         cfg = Config.load(config_path)
         # --url overrides the configured target, auto-adding its host to scope.
         if url:
-            cfg.target_url = url.strip()
+            cfg.target_url = normalize_url(url)
             host = urlparse(cfg.target_url).hostname or ""
             if host and not cfg.scope.in_scope(host):
                 cfg.scope.include.extend([host, f"*.{host}"])
@@ -164,10 +166,12 @@ def report_cmd(config_path: str | None, url: str | None) -> None:
     """Render a report from the existing data store (no scanning)."""
     if not config_path and not url:
         raise click.UsageError("provide --config <file> and/or --url <target>.")
+    from .config import normalize_url
+
     if config_path:
         cfg = Config.load(config_path)
         if url:
-            cfg.target_url = url.strip()
+            cfg.target_url = normalize_url(url)
     else:
         cfg = Config.from_url(url)
     orch = Orchestrator(cfg, authorized=False, init_db=False)

@@ -86,3 +86,14 @@ def test_report_generation(tmp_path: Path):
 
     xml = next(p for p in written if p.suffix == ".xml").read_text()
     assert "<finding" in xml and "Exposed .git directory" in xml
+
+
+def test_normalize_url_adds_scheme():
+    from recontoreport.config import normalize_url, Config
+    assert normalize_url("itsecgames.com") == "http://itsecgames.com"
+    assert normalize_url("https://x.com/a") == "https://x.com/a"
+    assert normalize_url("  example.com  ") == "http://example.com"
+    # scheme-less --url must still yield a usable scope
+    cfg = Config.from_url("itsecgames.com")
+    assert cfg.scope.in_scope("itsecgames.com")
+    assert cfg.scope.in_scope("sub.itsecgames.com")

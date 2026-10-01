@@ -70,7 +70,9 @@ class ScanPhase(Phase):
     # -- nuclei --------------------------------------------------------------
     def _run_nuclei(self, errors: list[str]) -> int:
         binary = self.config.tool("nuclei")
-        urls = self._in_scope_urls()
+        nuclei_cfg = self.config.nuclei or {}
+        max_urls = int(nuclei_cfg.get("max_urls", 100))
+        urls = self._in_scope_urls(limit=max_urls)
         if not urls:
             errors.append("nuclei: no in-scope URLs to scan")
             return 0
@@ -80,17 +82,25 @@ class ScanPhase(Phase):
             urls_path = uf.name
         out_path = urls_path + ".jsonl"
 
-        cmd = [binary, "-l", urls_path, "-jsonl", "-o", out_path, "-silent"]
-        templates_dir = (self.config.nuclei or {}).get("templates_dir") or ""
-        tags = (self.config.nuclei or {}).get("tags") or []
+        cmd = [
+            binary, "-l", urls_path, "-jsonl", "-o", out_path, "-silent",
+            "-disable-update-check",
+            "-timeout", "10", "-retries", "1",
+            "-rate-limit", str(nuclei_cfg.get("rate_limit", 150)),
+        ]
+        templates_dir = nuclei_cfg.get("templates_dir") or ""
+        tags = nuclei_cfg.get("tags") or []
         if templates_dir:
             cmd += ["-t", str(Path(templates_dir).expanduser())]
         if tags:
             cmd += ["-tags", ",".join(tags)]
         if not templates_dir and not tags:
             self.log.warning(
-                "nuclei: no templates_dir/tags configured — using nuclei's default "
-                "template set (auto-downloaded to ~/nuclei-templates on first run)."
+                "nuclei: no templates_dir/tags configured — using the full default "
+                "template set against %s URL(s). FIRST RUN DOWNLOADS ~10k templates "
+                "(several minutes, no output meanwhile) and the scan itself is slow. "
+                "To speed it up, set nuclei.tags (e.g. ['misconfiguration','exposure']) "
+                "in config.yaml.", len(urls),
             )
 
         try:

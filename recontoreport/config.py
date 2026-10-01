@@ -18,6 +18,20 @@ import yaml
 _ENV_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
 
+def normalize_url(url: str) -> str:
+    """Ensure a URL has a scheme so urlparse().hostname works.
+
+    'itsecgames.com' -> 'http://itsecgames.com'; URLs with a scheme are returned
+    unchanged (trimmed).
+    """
+    url = (url or "").strip()
+    if not url:
+        return url
+    if "://" not in url:
+        url = "http://" + url
+    return url
+
+
 def _expand_env(value: Any) -> Any:
     """Recursively expand ${VAR} references in strings within a nested structure."""
     if isinstance(value, str):
@@ -179,7 +193,7 @@ class Config:
         """
         from urllib.parse import urlparse
 
-        url = url.strip()
+        url = normalize_url(url)
         host = urlparse(url).hostname or ""
         include = [host, f"*.{host}"] if host else []
         return cls(
