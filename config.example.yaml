@@ -53,11 +53,11 @@ wordlists:
   content_discovery: ""   # e.g. "/usr/share/seclists/Discovery/Web-Content/common.txt"
 
 # --- nuclei template sets (Phase 3) ------------------------------------------
-# No template set is bundled or selected by default. Set the directory/tags you
-# want once you reach Phase 3; left empty, the nuclei phase will refuse to run.
+# If both are left empty, nuclei runs with its OWN default template set (it
+# auto-downloads to ~/nuclei-templates on first run). Set these to scope it down.
 nuclei:
-  templates_dir: ""       # e.g. "~/nuclei-templates"
-  tags: []                # e.g. ["owasp", "cve"]
+  templates_dir: ""       # e.g. "~/nuclei-templates/http/misconfiguration"
+  tags: []                # e.g. ["owasp", "cve", "misconfiguration"]
 
 # --- API keys / secrets ------------------------------------------------------
 # Optional provider keys for discovery tools (e.g. subfinder sources). Leave

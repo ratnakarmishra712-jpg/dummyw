@@ -158,11 +158,17 @@ class Orchestrator:
 
 
 def parse_phase_arg(value: str | None, default: list[int]) -> list[int]:
-    """Parse ``--phases 1,2,3`` into an ordered, de-duplicated list."""
+    """Parse ``--phases 1,2,3`` (or ``all``) into an ordered, de-duplicated list.
+
+    Accepts commas or spaces as separators, so ``--phases "1 2 3"`` and
+    ``--phases 1,2,3`` are equivalent.
+    """
     if not value:
         return list(default)
+    if value.strip().lower() == "all":
+        return list(default)
     out: list[int] = []
-    for part in value.split(","):
+    for part in value.replace(",", " ").split():
         part = part.strip()
         if not part:
             continue

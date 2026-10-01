@@ -59,7 +59,12 @@ def initdb(config_path: str) -> None:
 
 @main.command("run")
 @click.option("--config", "config_path", required=True, type=click.Path(exists=True))
-@click.option("--phases", "phases_arg", default=None, help="Subset, e.g. '1,2,3'. Default: all.")
+@click.option("--url", "url", default=None, help="Target website URL (overrides config target.url).")
+@click.option(
+    "--phases", "phases_arg", default=None,
+    help="Which phases to run: e.g. '1,2,3', '1 2 3', a single '3', or 'all'. "
+    "Default: all. Dependency phases are added automatically.",
+)
 @click.option(
     "--i-have-authorization",
     "authorized",
@@ -73,17 +78,34 @@ def initdb(config_path: str) -> None:
 def run(
     ctx: click.Context,
     config_path: str,
+    url: str | None,
     phases_arg: str | None,
     authorized: bool,
     report: bool,
 ) -> None:
-    """Run the pipeline phases against the configured target."""
+    """Run the pipeline phases against the target."""
+    from urllib.parse import urlparse
+    from .phases import resolve_phases
+
     cfg = Config.load(config_path)
-    phase_numbers = parse_phase_arg(phases_arg, DEFAULT_PHASES)
+
+    # --url overrides the configured target, and auto-adds its host to scope so
+    # a quick one-off scan "just works".
+    if url:
+        cfg.target_url = url.strip()
+        host = urlparse(cfg.target_url).hostname or ""
+        if host and not cfg.scope.in_scope(host):
+            cfg.scope.include.extend([host, f"*.{host}"])
+            console.print(f"[yellow]Added '{host}' (and *.{host}) to scope for this run.[/]")
+
+    requested = parse_phase_arg(phases_arg, DEFAULT_PHASES)
+    phase_numbers, auto_added = resolve_phases(requested)
 
     console.rule("[bold]ReconToReport")
     console.print(f"Target : [cyan]{cfg.target_url}[/]")
-    console.print(f"Phases : {phase_numbers}")
+    console.print(f"Phases : {phase_numbers}" + (
+        f"  [dim](auto-added dependencies: {auto_added})[/]" if auto_added else ""
+    ))
     console.print(f"Scope  : include={cfg.scope.include} exclude={cfg.scope.exclude}")
 
     if not authorized:

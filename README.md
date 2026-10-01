@@ -20,10 +20,32 @@ This is an **incremental build**. What's implemented and working today:
 - ✅ **Phase 2**: `mitmproxy` capture addon (logs every request/response +
   WebSocket message into `http_transactions`) and Playwright auth capture
   (persists `storage_state` per role into `auth_contexts`)
+- ✅ **Phase 3**: `nuclei` scanner → `findings`, privilege-escalation diffing
+  (replays high-priv transactions with lower-priv contexts), and a reflected/DOM
+  XSS canary (Playwright)
+- ✅ **Phase 4**: JWT weakness analysis (alg=none / weak secret / no-exp) over
+  captured traffic, and `sqlmap` against parameterized in-scope URLs
+- ✅ **Phase 5**: secret scraping (emails, keys, Luhn-checked cards) over
+  captured transactions → `secret_matches`
 - ✅ Jinja2 HTML report (and XML) grouped by severity
-- ⏳ Phases 3–5 and the remaining Phase 1 tools (`amass`, `prance`/OpenAPI,
-  `katana`) are stubbed with `TODO` markers and a phase registry ready to
-  accept them.
+- ⏳ Remaining Phase 1 tools (`amass`, `prance`/OpenAPI, `katana`) and the
+  higher-impact Phase 4 integrations (`interactsh` OOB, `hydra`) are stubbed /
+  documented for an explicit per-engagement decision.
+
+### Phases & dependencies
+
+Selecting a phase auto-runs its prerequisites (ascending order):
+
+| Phase | Name    | Active? | Depends on |
+|------:|---------|---------|------------|
+| 1     | recon   | yes     | —          |
+| 2     | traffic | yes     | —          |
+| 3     | scan    | yes     | 1          |
+| 4     | exploit | yes     | 3 (→1)     |
+| 5     | harvest | no      | —          |
+
+So `--phases 4` actually runs `1, 3, 4`. "Active" phases need
+`--i-have-authorization`; Phase 5 is offline and does not.
 
 ## Quick start (one command each)
 
@@ -121,8 +143,17 @@ r2r initdb --config config.yaml
 # Dry run (no authorization): active phases are SKIPPED, report still renders
 r2r run --config config.yaml --phases 1
 
-# Authorized run of Phase 1
-r2r run --config config.yaml --phases 1 --i-have-authorization
+# target on the command line (overrides config target.url; host auto-added to scope)
+r2r run --url https://target.com --config config.yaml --phases 1 --i-have-authorization
+
+# run everything (1-5); dependencies are resolved automatically
+r2r run --config config.yaml --phases all --i-have-authorization
+
+# a single phase pulls in its prerequisites: this runs 1, 3, 4
+r2r run --config config.yaml --phases 4 --i-have-authorization
+
+# phases accept commas or spaces
+r2r run --config config.yaml --phases "1 2 3" --i-have-authorization
 
 # Render a report from the existing store without scanning
 r2r report --config config.yaml

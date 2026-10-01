@@ -54,6 +54,9 @@ class Phase(abc.ABC):
     number: int
     name: str
     active: bool = True
+    # Phases that must run before this one (transitively resolved by the
+    # orchestrator so selecting a phase auto-runs its prerequisites).
+    depends_on: tuple[int, ...] = ()
 
     def __init__(self, ctx: PhaseContext) -> None:
         self.ctx = ctx
