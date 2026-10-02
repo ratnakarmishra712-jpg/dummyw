@@ -3,146 +3,122 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vulnerability Assessment Report — {{ target.url if target else "unknown" }}</title>
+<title>ReconToReport — {{ target.url if target else "unknown" }}</title>
 <style>
-  :root {
-    --critical: #7b1fa2; --high: #c62828; --medium: #ef6c00;
-    --low: #f9a825; --info: #1565c0; --fg: #1a1a1a; --muted: #666; --bd: #ddd;
+  :root{
+    --bg:#0a0a0a; --panel:#111; --fg:#f4f4f4; --mut:#8a8a8a; --bd:#2a2a2a;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff;
+    --critical:#b14cff; --high:#ff4d4d; --medium:#f2a100; --low:#f2c200; --info:#5b8cff;
   }
-  * { box-sizing: border-box; }
-  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-         color: var(--fg); margin: 0; padding: 0 16px; line-height: 1.5; }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 0 64px; }
-  header h1 { margin: 0 0 4px; font-size: 1.6rem; }
-  .meta { color: var(--muted); font-size: .9rem; }
-  .authz { background: #fff8e1; border: 1px solid #ffe082; padding: 10px 14px;
-           border-radius: 6px; margin: 16px 0; font-size: .85rem; }
-  .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
-  .pill { padding: 6px 12px; border-radius: 20px; color: #fff; font-size: .85rem; }
-  .pill small { opacity: .85; }
-  .sev-critical { background: var(--critical); }
-  .sev-high { background: var(--high); }
-  .sev-medium { background: var(--medium); }
-  .sev-low { background: var(--low); color: #222; }
-  .sev-info { background: var(--info); }
-  h2.sevhead { margin-top: 32px; padding-bottom: 6px; border-bottom: 2px solid var(--bd); }
-  .finding { border: 1px solid var(--bd); border-left: 5px solid var(--bd);
-             border-radius: 6px; padding: 14px 16px; margin: 14px 0; }
-  .finding.crit { border-left-color: var(--critical); }
-  .finding.high { border-left-color: var(--high); }
-  .finding.med { border-left-color: var(--medium); }
-  .finding.low { border-left-color: var(--low); }
-  .finding.inf { border-left-color: var(--info); }
-  .finding h3 { margin: 0 0 6px; font-size: 1.05rem; }
-  .tags { font-size: .78rem; color: var(--muted); margin-bottom: 8px; }
-  .tags span { display: inline-block; background: #f3f3f3; border-radius: 4px;
-               padding: 2px 7px; margin-right: 6px; }
-  .field { margin: 8px 0; }
-  .field b { display: block; font-size: .8rem; text-transform: uppercase;
-             letter-spacing: .03em; color: var(--muted); }
-  pre { background: #f7f7f7; border: 1px solid var(--bd); border-radius: 4px;
-        padding: 10px; overflow-x: auto; font-size: .82rem; white-space: pre-wrap; }
-  table { border-collapse: collapse; width: 100%; font-size: .85rem; margin: 10px 0; }
-  th, td { border: 1px solid var(--bd); padding: 6px 8px; text-align: left; }
-  th { background: #fafafa; }
-  .empty { color: var(--muted); font-style: italic; }
-  footer { margin-top: 48px; color: var(--muted); font-size: .8rem;
-           border-top: 1px solid var(--bd); padding-top: 12px; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;line-height:1.55;
+    background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:4px 4px}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 18px 80px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
+  h1,h2,h3{font-weight:800;letter-spacing:-.01em;text-transform:uppercase}
+  header{border-bottom:1px solid var(--bd);padding-bottom:16px;margin-bottom:8px;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .logo{font-size:1.9rem;font-weight:900;letter-spacing:-.04em}
+  .logo b{color:var(--green)}
+  header h1{font-size:1.1rem;margin:6px 0 0}
+  .meta{color:var(--mut);font-size:.72rem}
+  .meta .mono{color:var(--green)}
+  .dossier{color:var(--red);font-size:.72rem;margin:14px 0 2px}
+  .authz{border:1px dashed var(--bd);color:var(--mut);padding:10px 14px;border-radius:8px;
+    margin:16px 0;font-size:.78rem}
+  .counts{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+  .pill{padding:7px 14px;border-radius:999px;font-size:.72rem;font-weight:700;color:#000}
+  .pill b{opacity:.7;margin-left:6px}
+  .sev-critical{background:var(--critical);color:#fff}.sev-high{background:var(--high);color:#fff}
+  .sev-medium{background:var(--medium)}.sev-low{background:var(--low)}.sev-info{background:var(--info);color:#fff}
+  h2.sevhead{font-size:.8rem;color:var(--mut);border-bottom:1px solid var(--bd);
+    padding-bottom:8px;margin:34px 0 4px;letter-spacing:.14em}
+  .finding{background:var(--panel);border:1px solid var(--bd);border-left:4px solid var(--bd);
+    border-radius:8px;padding:16px 18px;margin:14px 0}
+  .finding.crit{border-left-color:var(--critical)}.finding.high{border-left-color:var(--high)}
+  .finding.med{border-left-color:var(--medium)}.finding.low{border-left-color:var(--low)}
+  .finding.inf{border-left-color:var(--info)}
+  .finding h3{margin:0 0 8px;font-size:1.05rem}
+  .tags{font-size:.68rem;margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
+  .tags span{border:1px solid var(--bd);border-radius:999px;padding:3px 9px;color:var(--mut)}
+  .field{margin:9px 0}.field b{display:block;font-size:.66rem;color:var(--green);margin-bottom:3px;letter-spacing:.1em}
+  pre{background:#000;border:1px solid var(--bd);border-radius:6px;padding:10px;overflow-x:auto;
+    font-size:.78rem;white-space:pre-wrap;color:#c9d1d9}
+  table{border-collapse:collapse;width:100%;font-size:.8rem;margin:10px 0}
+  th,td{border:1px solid var(--bd);padding:7px 9px;text-align:left}
+  th{background:#000;color:var(--mut);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase}
+  .empty{color:var(--mut);font-style:italic}
+  footer{margin-top:50px;color:var(--mut);font-size:.72rem;border-top:1px solid var(--bd);padding-top:14px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Vulnerability Assessment Report</h1>
+    <div>
+      <div class="logo">RECON<b>//</b>REPORT</div>
+      <h1>Vulnerability Assessment Dossier</h1>
+    </div>
     <div class="meta">
-      Target: <strong>{{ target.url if target else "n/a" }}</strong><br>
-      {% if target and target.engagement_ref %}Engagement: {{ target.engagement_ref }}<br>{% endif %}
-      Generated: {{ generated_at }}
+      TARGET <span class="mono">{{ target.url if target else "n/a" }}</span><br>
+      {% if target and target.engagement_ref %}REF <span class="mono">{{ target.engagement_ref }}</span><br>{% endif %}
+      GENERATED <span class="mono">{{ generated_at }}</span>
     </div>
   </header>
 
-  <div class="authz">
-    This assessment was performed under explicit written authorization from the
-    system owner. All testing was limited to the agreed scope.
-  </div>
+  <div class="authz">Conducted under explicit written authorization. Testing limited to the agreed scope.</div>
 
-  <section>
-    <h2 class="sevhead">Summary</h2>
-    <div class="counts">
-      {% for sev in severity_order %}
-      <span class="pill sev-{{ sev }}">{{ sev|capitalize }} <small>{{ counts.get(sev, 0) }}</small></span>
-      {% endfor %}
-    </div>
-    <p>{{ total_findings }} finding(s) across {{ asset_count }} discovered asset(s).</p>
-  </section>
-
-  <section>
-    <h2 class="sevhead">Findings</h2>
-    {% if not grouped_findings %}
-      <p class="empty">No findings recorded.</p>
-    {% endif %}
-    {% set cls = {"critical":"crit","high":"high","medium":"med","low":"low","info":"inf"} %}
-    {% for sev in severity_order if grouped_findings.get(sev) %}
-      <h3>{{ sev|capitalize }} severity</h3>
-      {% for f in grouped_findings[sev] %}
-      <article class="finding {{ cls[sev] }}">
-        <h3>{{ f.title }}</h3>
-        <div class="tags">
-          {% if f.cwe_id %}<span>{{ f.cwe_id }}</span>{% endif %}
-          {% if f.owasp_category %}<span>{{ f.owasp_category }}</span>{% endif %}
-          <span>Confidence: {{ f.confidence }}</span>
-          <span>Source: {{ f.tool_source or "manual" }}</span>
-          <span>Status: {{ f.status }}</span>
-        </div>
-        {% if f.asset %}<div class="field"><b>Affected asset</b>{{ f.asset.url }}</div>{% endif %}
-        {% if f.description %}<div class="field"><b>Description</b>{{ f.description }}</div>{% endif %}
-        {% if f.poc_steps %}<div class="field"><b>Proof of concept</b><pre>{{ f.poc_steps }}</pre></div>{% endif %}
-        {% if f.remediation %}<div class="field"><b>Remediation</b>{{ f.remediation }}</div>{% endif %}
-      </article>
-      {% endfor %}
+  <div class="dossier mono">// Summary</div>
+  <div class="counts">
+    {% for sev in severity_order %}
+    <span class="pill sev-{{ sev }} mono">{{ sev }} <b>{{ counts.get(sev, 0) }}</b></span>
     {% endfor %}
-  </section>
+  </div>
+  <p class="meta mono">{{ total_findings }} findings · {{ asset_count }} assets</p>
 
-  <section>
-    <h2 class="sevhead">Discovered assets</h2>
-    {% if assets %}
-    <table>
-      <thead><tr><th>Type</th><th>URL</th><th>Method</th><th>Source</th><th>In scope</th></tr></thead>
-      <tbody>
-      {% for a in assets %}
-        <tr>
-          <td>{{ a.type }}</td>
-          <td>{{ a.url }}</td>
-          <td>{{ a.method or "—" }}</td>
-          <td>{{ a.source_tool or "—" }}</td>
-          <td>{{ (a.meta or {}).get("in_scope", "—") }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <p class="empty">No assets discovered.</p>
-    {% endif %}
-  </section>
+  <h2 class="sevhead mono">Findings</h2>
+  {% if not grouped_findings %}<p class="empty">No findings recorded.</p>{% endif %}
+  {% set cls = {"critical":"crit","high":"high","medium":"med","low":"low","info":"inf"} %}
+  {% for sev in severity_order if grouped_findings.get(sev) %}
+    <div class="dossier mono">// {{ sev }} severity</div>
+    {% for f in grouped_findings[sev] %}
+    <article class="finding {{ cls[sev] }}">
+      <h3>{{ f.title }}</h3>
+      <div class="tags mono">
+        {% if f.cwe_id %}<span>{{ f.cwe_id }}</span>{% endif %}
+        {% if f.owasp_category %}<span>{{ f.owasp_category }}</span>{% endif %}
+        <span>conf: {{ f.confidence }}</span><span>src: {{ f.tool_source or "manual" }}</span><span>{{ f.status }}</span>
+      </div>
+      {% if f.asset %}<div class="field"><b>Affected asset</b>{{ f.asset.url }}</div>{% endif %}
+      {% if f.description %}<div class="field"><b>Description</b>{{ f.description }}</div>{% endif %}
+      {% if f.poc_steps %}<div class="field"><b>Proof of concept</b><pre>{{ f.poc_steps }}</pre></div>{% endif %}
+      {% if f.remediation %}<div class="field"><b>Remediation</b>{{ f.remediation }}</div>{% endif %}
+    </article>
+    {% endfor %}
+  {% endfor %}
+
+  <h2 class="sevhead mono">Discovered assets</h2>
+  {% if assets %}
+  <table>
+    <thead><tr><th>Type</th><th>URL</th><th>Method</th><th>Source</th><th>In scope</th></tr></thead>
+    <tbody>
+    {% for a in assets %}
+      <tr><td>{{ a.type }}</td><td>{{ a.url }}</td><td>{{ a.method or "—" }}</td>
+      <td>{{ a.source_tool or "—" }}</td><td>{{ (a.meta or {}).get("in_scope", "—") }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="empty">No assets discovered.</p>{% endif %}
 
   {% if secrets %}
-  <section>
-    <h2 class="sevhead">Secret matches (unverified)</h2>
-    <p class="meta">Regex hits pending manual review — not promoted to findings.</p>
-    <table>
-      <thead><tr><th>Kind</th><th>Value</th><th>Context</th></tr></thead>
-      <tbody>
-      {% for s in secrets %}
-        <tr><td>{{ s.kind }}</td><td>{{ s.matched_value }}</td><td>{{ s.context or "" }}</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </section>
+  <h2 class="sevhead mono">Secret matches (unverified)</h2>
+  <table>
+    <thead><tr><th>Kind</th><th>Value</th><th>Context</th></tr></thead>
+    <tbody>{% for s in secrets %}<tr><td>{{ s.kind }}</td><td>{{ s.matched_value }}</td><td>{{ s.context or "" }}</td></tr>{% endfor %}</tbody>
+  </table>
   {% endif %}
 
-  <footer>
-    Generated by ReconToReport. For authorized security testing only.
-  </footer>
+  <footer class="mono">Generated by ReconToReport · for authorized security testing only</footer>
 </div>
 </body>
 </html>

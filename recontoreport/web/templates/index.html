@@ -5,72 +5,83 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ReconToReport</title>
 <style>
-  :root { --fg:#1a1a1a; --mut:#666; --bd:#ddd; --accent:#1565c0; --ok:#2e7d32; --bad:#c62828; }
-  *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--fg);margin:0;background:#fafafa}
-  .wrap{max-width:820px;margin:0 auto;padding:24px 16px 64px}
-  h1{font-size:1.5rem;margin:0 0 4px} .sub{color:var(--mut);margin:0 0 20px;font-size:.9rem}
-  .card{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:16px}
-  label{display:block;font-weight:600;font-size:.85rem;margin:12px 0 4px}
-  input[type=text],input[type=password],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;font-size:.9rem;font-family:inherit}
-  textarea{min-height:52px;resize:vertical} .hint{color:var(--mut);font-size:.78rem;margin-top:3px}
-  .row{display:flex;gap:10px;flex-wrap:wrap} .row>div{flex:1;min-width:140px}
-  .phases{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
-  .phases label{display:flex;align-items:center;gap:6px;font-weight:400;margin:0}
-  details{margin-top:8px} summary{cursor:pointer;font-weight:600;font-size:.9rem;color:var(--accent)}
-  button{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:11px 20px;font-size:.95rem;cursor:pointer}
-  button.sec{background:#eee;color:#222;padding:7px 12px;font-size:.82rem}
-  button:disabled{opacity:.5;cursor:default}
-  .authz{background:#fff8e1;border:1px solid #ffe082;padding:10px 12px;border-radius:6px;font-size:.85rem;margin-top:12px}
-  .authz label{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:0}
-  table{border-collapse:collapse;width:100%;font-size:.85rem;margin-top:10px}
-  th,td{border:1px solid var(--bd);padding:6px 8px;text-align:left} th{background:#fafafa}
-  .OK{color:var(--ok);font-weight:600}.FAILED{color:var(--bad);font-weight:600}.SKIPPED{color:var(--mut)}
-  pre{background:#0d1117;color:#c9d1d9;border-radius:6px;padding:10px;font-size:.78rem;max-height:260px;overflow:auto;white-space:pre-wrap}
-  .role{border:1px dashed var(--bd);border-radius:6px;padding:10px;margin-top:8px;position:relative}
-  .role .rm{position:absolute;top:6px;right:6px}
-  .err{color:var(--bad);font-size:.85rem}
-  a.report{display:inline-block;margin-top:12px;background:var(--ok);color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none}
+  :root{--bg:#0a0a0a;--panel:#111;--fg:#f4f4f4;--mut:#8a8a8a;--bd:#2a2a2a;
+    --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;}
+  *{box-sizing:border-box}
+  body{font-family:"Helvetica Neue",Arial,sans-serif;color:var(--fg);margin:0;background:var(--bg);
+    background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:4px 4px}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 16px 70px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
+  .logo{font-size:1.8rem;font-weight:900;letter-spacing:-.04em}.logo b{color:var(--green)}
+  h1{font-size:1.05rem;font-weight:800;text-transform:uppercase;margin:6px 0 2px}
+  .sub{color:var(--mut);margin:0 0 20px;font-size:.74rem}
+  .card{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:20px;margin-bottom:16px}
+  label{display:block;font-weight:700;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin:14px 0 5px}
+  input[type=text],input[type=password],textarea,select{width:100%;padding:9px 11px;background:#000;color:var(--fg);
+    border:1px solid var(--bd);border-radius:7px;font-size:.9rem;font-family:inherit}
+  input:focus,textarea:focus{outline:none;border-color:var(--green)}
+  textarea{min-height:52px;resize:vertical} .hint{color:var(--mut);font-size:.74rem;margin-top:4px}
+  code{color:var(--yellow);font-size:.74rem}
+  .row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:150px}
+  .phases{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px}
+  .phases label{display:flex;align-items:center;gap:7px;font-weight:400;color:var(--fg);text-transform:none;letter-spacing:0;margin:0;font-size:.85rem}
+  accent-color:var(--green);
+  input[type=checkbox]{accent-color:var(--green);width:16px;height:16px}
+  details{margin-top:10px}summary{cursor:pointer;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+  button{background:var(--green);color:#000;border:0;border-radius:999px;padding:12px 26px;font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+  button.sec{background:transparent;color:var(--fg);border:1px solid var(--bd);padding:7px 14px}
+  button:disabled{opacity:.4;cursor:default}
+  .authz{border:1px dashed var(--yellow);color:#f0e4b8;padding:11px 13px;border-radius:8px;font-size:.8rem;margin-top:14px}
+  .authz label{display:flex;gap:9px;align-items:flex-start;font-weight:400;color:#f0e4b8;text-transform:none;letter-spacing:0;margin:0}
+  table{border-collapse:collapse;width:100%;font-size:.82rem;margin-top:10px}
+  th,td{border:1px solid var(--bd);padding:7px 9px;text-align:left}
+  th{background:#000;color:var(--mut);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase}
+  .OK{color:var(--green);font-weight:700}.FAILED{color:var(--red);font-weight:700}.SKIPPED{color:var(--mut)}
+  pre{background:#000;color:#38e07a;border:1px solid var(--bd);border-radius:8px;padding:11px;font-size:.76rem;max-height:260px;overflow:auto;white-space:pre-wrap}
+  .role{border:1px dashed var(--bd);border-radius:8px;padding:12px;margin-top:10px;position:relative}
+  .role .rm{position:absolute;top:8px;right:8px}
+  .err{color:var(--red);font-size:.82rem;margin-left:8px}
+  a.report{display:inline-block;margin-top:14px;background:var(--yellow);color:#000;padding:11px 22px;border-radius:999px;text-decoration:none;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem}
+  h3{text-transform:uppercase;font-weight:800;letter-spacing:.04em}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>ReconToReport</h1>
-  <p class="sub">Authorized security testing only. Fill in a target, pick phases, click Scan.</p>
+  <div class="logo">RECON<b>//</b>REPORT</div>
+  <h1>Attack-surface intel console</h1>
+  <p class="sub mono">authorized security testing only · set a target, pick phases, run</p>
 
   <div class="card" id="formCard">
     <label>Target URL</label>
     <input type="text" id="url" placeholder="https://your-authorized-target.com">
     <div class="hint">You can omit http:// — it's added automatically.</div>
 
-    <label>Phases to run</label>
+    <label>Phases</label>
     <div class="phases">
-      <label><input type="checkbox" class="ph" value="1" checked> 1 · Recon (crawl + subdomains)</label>
-      <label><input type="checkbox" class="ph" value="2" checked> 2 · Traffic/auth capture</label>
-      <label><input type="checkbox" class="ph" value="3" checked> 3 · Scan (nuclei, XSS, privesc)</label>
-      <label><input type="checkbox" class="ph" value="4" checked> 4 · Exploit (JWT, sqlmap)</label>
-      <label><input type="checkbox" class="ph" value="5" checked> 5 · Harvest (secrets)</label>
+      <label><input type="checkbox" class="ph" value="1" checked> 1 · Recon</label>
+      <label><input type="checkbox" class="ph" value="2" checked> 2 · Traffic/Auth</label>
+      <label><input type="checkbox" class="ph" value="3" checked> 3 · Scan</label>
+      <label><input type="checkbox" class="ph" value="4" checked> 4 · Exploit</label>
+      <label><input type="checkbox" class="ph" value="5" checked> 5 · Harvest</label>
     </div>
-    <div class="hint">Dependencies run automatically (e.g. picking 4 also runs 1 and 3).</div>
+    <div class="hint">Dependencies run automatically (picking 4 also runs 1 and 3).</div>
 
     <details>
-      <summary>Discovery options (wordlist, nuclei, scope)</summary>
-      <label>Wordlist file path (for path brute-forcing — optional)</label>
+      <summary>Discovery options</summary>
+      <label>Wordlist file path (optional)</label>
       <input type="text" id="wordlist" placeholder="/Users/you/SecLists/Discovery/Web-Content/common.txt">
-      <div class="hint">Leave blank to skip brute-forcing. Download one: <code>git clone --depth 1 https://github.com/danielmiessler/SecLists.git ~/SecLists</code></div>
+      <div class="hint">Leave blank to skip brute-forcing. Get one: <code>git clone --depth 1 https://github.com/danielmiessler/SecLists.git ~/SecLists</code></div>
       <div class="row">
-        <div><label>nuclei tags (comma-sep, optional)</label><input type="text" id="nuclei_tags" placeholder="misconfiguration,exposure,cve"></div>
+        <div><label>nuclei tags</label><input type="text" id="nuclei_tags" placeholder="misconfiguration,exposure,cve"></div>
         <div><label>nuclei max URLs</label><input type="text" id="nuclei_max_urls" value="100"></div>
       </div>
-      <div class="hint">Leave tags blank to use nuclei's full default set (slow on first run).</div>
-      <label>Scope — include hosts (one per line, optional)</label>
-      <textarea id="scope_include" placeholder="auto-filled from the target host"></textarea>
-      <label>Scope — exclude hosts (one per line, optional)</label>
-      <textarea id="scope_exclude"></textarea>
+      <label>Scope — include hosts (one/line)</label><textarea id="scope_include" placeholder="auto-filled from target"></textarea>
+      <label>Scope — exclude hosts (one/line)</label><textarea id="scope_exclude"></textarea>
     </details>
 
     <details>
-      <summary>Login / auth roles (needed to scan pages behind a login)</summary>
-      <div class="hint">Add a role so the tool logs in and reaches the app. Selectors are the login form's field names (ask me if unsure).</div>
+      <summary>Login / auth roles</summary>
+      <div class="hint">Add a role so the tool logs in and reaches pages behind a login.</div>
       <div id="roles"></div>
       <button class="sec" type="button" onclick="addRole()">+ Add login role</button>
     </details>
@@ -80,17 +91,14 @@
         <span>I have explicit written authorization to test this target. (Required for active phases 1–4.)</span></label>
     </div>
 
-    <div style="margin-top:16px">
-      <button id="go" onclick="startScan()">Scan</button>
-      <span id="formErr" class="err"></span>
-    </div>
+    <div style="margin-top:18px"><button id="go" onclick="startScan()">▸ Run scan</button><span id="formErr" class="err"></span></div>
   </div>
 
   <div class="card" id="progress" style="display:none">
     <h3 id="pstatus" style="margin:0 0 8px">Running…</h3>
     <div id="ptable"></div>
     <a id="reportLink" class="report" style="display:none" target="_blank">Open report ↗</a>
-    <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--mut)">Live log</h4>
+    <h4 class="mono" style="margin:16px 0 6px;font-size:.68rem;color:var(--mut)">// live log</h4>
     <pre id="plog"></pre>
   </div>
 </div>
