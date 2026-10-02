@@ -70,7 +70,7 @@ class ScopeConfig:
 
 @dataclass
 class PhasePolicy:
-    retries: int = 1
+    retries: int = 0
     retry_backoff_seconds: float = 3.0
     tool_timeout: int = 600
 
@@ -172,7 +172,7 @@ class Config:
             nuclei=dict(raw.get("nuclei") or {}),
             api_keys=dict(raw.get("api_keys") or {}),
             phase_policy=PhasePolicy(
-                retries=int(phases_raw.get("retries", 1)),
+                retries=int(phases_raw.get("retries", 0)),
                 retry_backoff_seconds=float(phases_raw.get("retry_backoff_seconds", 3.0)),
                 tool_timeout=int(phases_raw.get("tool_timeout", 600)),
             ),
