@@ -103,6 +103,14 @@
     <h4 class="mono" style="margin:16px 0 6px;font-size:.68rem;color:var(--mut)">// live log</h4>
     <pre id="plog"></pre>
   </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0">Past reports</h3>
+      <button class="sec" type="button" onclick="loadHistory()">refresh</button>
+    </div>
+    <div id="history" class="hint" style="margin-top:10px">Loading…</div>
+  </div>
 </div>
 
 <script>
@@ -146,11 +154,29 @@ async function startScan(){
     scope_include:document.getElementById('scope_include').value,
     scope_exclude:document.getElementById('scope_exclude').value,
     auth_roles:roles()};
+  // reset previous run's output before starting a new one
+  document.getElementById('plog').textContent='';
+  document.getElementById('ptable').innerHTML='';
+  const rl=document.getElementById('reportLink'); rl.style.display='none'; rl.removeAttribute('href');
+  const st0=document.getElementById('pstatus'); st0.textContent='Running…'; st0.className='';
   document.getElementById('go').disabled=true;
   const r=await fetch('/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const {run_id}=await r.json();
   document.getElementById('progress').style.display='block';
   poll(run_id);
+}
+async function loadHistory(){
+  const h=document.getElementById('history');
+  try{
+    const rows=await (await fetch('/runs')).json();
+    if(!rows.length){h.textContent='No past reports yet.';return;}
+    h.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:.82rem">'+
+      rows.map(r=>`<tr style="border-bottom:1px solid var(--bd)">
+        <td style="padding:6px 4px;color:var(--mut)">${r.when}</td>
+        <td style="padding:6px 4px">${r.target||r.id}</td>
+        <td style="padding:6px 4px;text-align:right"><a href="/report/${r.id}" target="_blank" style="color:var(--yellow)">open ↗</a></td></tr>`).join('')+
+      '</table>';
+  }catch(e){h.textContent='Could not load history.';}
 }
 async function poll(id){
   const r=await fetch('/status/'+id); const s=await r.json();
@@ -166,7 +192,9 @@ async function poll(id){
   else if(s.status==='done'){st.textContent='Done ✓'; document.getElementById('go').disabled=false;
     if(s.has_report){const a=document.getElementById('reportLink');a.href='/report/'+id;a.style.display='inline-block';}}
   else {st.textContent='Error'; st.className='FAILED'; document.getElementById('go').disabled=false;}
+  if(s.status!=='running') loadHistory();
 }
+loadHistory();
 </script>
 </body>
 </html>

@@ -210,6 +210,13 @@ class TrafficPhase(Phase):
     def run(self) -> PhaseResult:
         errors: list[str] = []
 
+        # With no login roles there is nothing to authenticate and nobody to
+        # drive the passive proxy, so capturing is pointless — skip cleanly
+        # instead of spinning a proxy that captures nothing (or fails).
+        if not self.config.auth_roles:
+            self.log.info("traffic: no auth roles configured; skipping capture.")
+            return self._result(ok=True, errors=[])
+
         try:
             ensure_available(self.config.tool("mitmproxy"))
         except Exception as exc:

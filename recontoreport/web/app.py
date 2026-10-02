@@ -215,9 +215,39 @@ def create_app() -> Flask:
     @app.get("/report/<run_id>")
     def report(run_id):  # noqa: ANN202
         run = RUNS.get(run_id)
-        if not run or not run.report_path:
+        if run and run.report_path:
+            return send_file(run.report_path)
+        return _serve_disk_report(run_id)
+
+    @app.get("/runs")
+    def runs():  # noqa: ANN202
+        """List past runs from disk so history survives restarts."""
+        import sqlite3
+        out = []
+        if DATA_DIR.is_dir():
+            for d in sorted(DATA_DIR.iterdir(), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True):
+                reps = sorted((d / "reports").glob("*.html")) if (d / "reports").is_dir() else []
+                if not reps:
+                    continue
+                target = ""
+                try:
+                    con = sqlite3.connect(d / "scan.db")
+                    row = con.execute("SELECT url FROM targets LIMIT 1").fetchone()
+                    con.close()
+                    target = row[0] if row else ""
+                except Exception:
+                    pass
+                import datetime
+                when = datetime.datetime.fromtimestamp(reps[-1].stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+                out.append({"id": d.name, "target": target, "when": when})
+        return jsonify(out[:50])
+
+    def _serve_disk_report(run_id):
+        safe = "".join(c for c in run_id if c.isalnum() or c in "-_")
+        reps = sorted((DATA_DIR / safe / "reports").glob("*.html")) if (DATA_DIR / safe / "reports").is_dir() else []
+        if not reps:
             return "No report", 404
-        return send_file(run.report_path)
+        return send_file(reps[-1].resolve())
 
     return app
 

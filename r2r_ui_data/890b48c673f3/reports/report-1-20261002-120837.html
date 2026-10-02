@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Security Assessment Report — {{ target.url if target else "unknown" }}</title>
+<title>Security Assessment Report — http://127.0.0.1:8911/</title>
 <style>
   :root{
     --bg:#0b0b0d; --panel:#131316; --fg:#ececec; --mut:#8c8c93; --bd:#262629;
@@ -49,89 +49,111 @@
 </style>
 </head>
 <body>
-{% set cvss = {"critical":"9.1 (Critical)","high":"7.5 (High)","medium":"5.3 (Medium)","low":"3.1 (Low)","info":"0.0 (Info)"} %}
-{% set vector = {"critical":"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H","high":"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N","medium":"CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:L/I:L/A:N","low":"CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:L/I:N/A:N","info":"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N"} %}
-{% set biz = {
-  "critical":"Exploitation could lead to full compromise of the application or its data, resulting in major financial, legal and reputational damage.",
-  "high":"An attacker could access or manipulate sensitive data or user sessions, causing significant breach-of-trust and compliance exposure.",
-  "medium":"Could be chained with other weaknesses to access restricted data or affect users, degrading trust and increasing breach likelihood.",
-  "low":"Limited direct impact, but contributes to overall attack surface and may aid an attacker during reconnaissance.",
-  "info":"No direct business impact; recorded for completeness and situational awareness."} %}
+
+
+
 <div class="wrap">
   <div class="cover">
     <div class="brand">RECON<b>//</b>REPORT</div>
     <h1>Web Application<br>Security Assessment</h1>
     <div class="meta">
-      Target: <span>{{ target.url if target else "n/a" }}</span><br>
-      {% if target and target.engagement_ref %}Engagement: <span>{{ target.engagement_ref }}</span><br>{% endif %}
-      Date: <span>{{ generated_at }}</span><br>
+      Target: <span>http://127.0.0.1:8911/</span><br>
+      
+      Date: <span>2026-10-02 12:08 UTC</span><br>
       Classification: <span>Confidential</span>
     </div>
   </div>
 
   <h2>Executive Summary</h2>
   <p>This assessment was conducted under explicit written authorization and limited to the agreed scope.
-     {{ total_findings }} finding(s) were identified across {{ asset_count }} discovered asset(s). The table
+     2 finding(s) were identified across 4 discovered asset(s). The table
      below summarizes severity distribution; each finding is detailed in the following section with impact and
      remediation guidance.</p>
   <div class="kpis">
-    {% for sev in severity_order %}
-    <div class="kpi {{ sev }}"><div class="n">{{ counts.get(sev, 0) }}</div><div class="l">{{ sev }}</div></div>
-    {% endfor %}
+    
+    <div class="kpi critical"><div class="n">1</div><div class="l">critical</div></div>
+    
+    <div class="kpi high"><div class="n">0</div><div class="l">high</div></div>
+    
+    <div class="kpi medium"><div class="n">0</div><div class="l">medium</div></div>
+    
+    <div class="kpi low"><div class="n">1</div><div class="l">low</div></div>
+    
+    <div class="kpi info"><div class="n">0</div><div class="l">info</div></div>
+    
   </div>
 
-  {% if findings %}
+  
   <h2>Findings Overview</h2>
   <table class="toc">
     <thead><tr><th>#</th><th>Finding</th><th>Severity</th><th>CWE</th></tr></thead>
     <tbody>
-    {% set ns = namespace(i=0) %}
-    {% for sev in severity_order if grouped_findings.get(sev) %}{% for f in grouped_findings[sev] %}{% set ns.i = ns.i + 1 %}
-      <tr><td>{{ "%02d"|format(ns.i) }}</td><td>{{ f.title }}</td>
-      <td><span class="badge b-{{ f.severity }}">{{ f.severity }}</span></td><td>{{ f.cwe_id or "—" }}</td></tr>
-    {% endfor %}{% endfor %}
+    
+    
+      <tr><td>01</td><td>JWT accepts 'alg: none' (unsigned)</td>
+      <td><span class="badge b-critical">critical</span></td><td>CWE-347</td></tr>
+    
+      <tr><td>02</td><td>JWT has no expiry (exp) claim</td>
+      <td><span class="badge b-low">low</span></td><td>CWE-613</td></tr>
+    
     </tbody>
   </table>
-  {% endif %}
+  
 
   <h2>Detailed Findings</h2>
-  {% if not grouped_findings %}<p class="empty">No findings were identified in the tested scope.</p>{% endif %}
-  {% set ns2 = namespace(i=0) %}
-  {% for sev in severity_order if grouped_findings.get(sev) %}{% for f in grouped_findings[sev] %}{% set ns2.i = ns2.i + 1 %}
+  
+  
+  
   <div class="finding">
-    <div class="fid">Finding {{ "%02d"|format(ns2.i) }} · {{ f.tool_source or "manual" }}</div>
-    <h3>{{ f.title }}</h3>
+    <div class="fid">Finding 01 · jwt_analysis</div>
+    <h3>JWT accepts 'alg: none' (unsigned)</h3>
     <div class="kv">
-      <div class="k">Affected URL</div><div>{{ f.asset.url if f.asset else target.url }}</div>
-      <div class="k">Severity</div><div><span class="badge b-{{ f.severity }}">{{ f.severity }}</span></div>
-      <div class="k">CVSS</div><div>{{ cvss[f.severity] }} <span class="mono" style="color:var(--mut);font-size:.78rem">{{ vector[f.severity] }}</span></div>
-      <div class="k">CWE / OWASP</div><div>{{ f.cwe_id or "—" }}{% if f.owasp_category %} · {{ f.owasp_category }}{% endif %}</div>
-      <div class="k">Confidence</div><div>{{ f.confidence }}</div>
+      <div class="k">Affected URL</div><div>http://127.0.0.1:8911/</div>
+      <div class="k">Severity</div><div><span class="badge b-critical">critical</span></div>
+      <div class="k">CVSS</div><div>9.1 (Critical) <span class="mono" style="color:var(--mut);font-size:.78rem">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</span></div>
+      <div class="k">CWE / OWASP</div><div>CWE-347 · A02:2021 Cryptographic Failures</div>
+      <div class="k">Confidence</div><div>firm</div>
     </div>
-    {% if f.description %}<div class="sec"><h4>Description</h4><div>{{ f.description }}</div></div>{% endif %}
-    <div class="sec"><h4>Business Impact</h4><div>{{ biz[f.severity] }}</div></div>
-    {% if f.poc_steps %}<div class="sec"><h4>Proof of Concept</h4><pre>{{ f.poc_steps }}</pre></div>{% endif %}
-    {% if f.remediation %}<div class="sec"><h4>Suggested Remediation</h4><div>{{ f.remediation }}</div></div>{% endif %}
+    <div class="sec"><h4>Description</h4><div>The token header declares alg=none, meaning it carries no signature.</div></div>
+    <div class="sec"><h4>Business Impact</h4><div>Exploitation could lead to full compromise of the application or its data, resulting in major financial, legal and reputational damage.</div></div>
+    <div class="sec"><h4>Proof of Concept</h4><pre>Token (truncated): eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4i...</pre></div>
+    <div class="sec"><h4>Suggested Remediation</h4><div>Use strong, rotated signing keys; pin the expected algorithm server-side; set short exp and reject alg=none.</div></div>
   </div>
-  {% endfor %}{% endfor %}
+  
+  <div class="finding">
+    <div class="fid">Finding 02 · jwt_analysis</div>
+    <h3>JWT has no expiry (exp) claim</h3>
+    <div class="kv">
+      <div class="k">Affected URL</div><div>http://127.0.0.1:8911/</div>
+      <div class="k">Severity</div><div><span class="badge b-low">low</span></div>
+      <div class="k">CVSS</div><div>3.1 (Low) <span class="mono" style="color:var(--mut);font-size:.78rem">CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:L/I:N/A:N</span></div>
+      <div class="k">CWE / OWASP</div><div>CWE-613 · A02:2021 Cryptographic Failures</div>
+      <div class="k">Confidence</div><div>firm</div>
+    </div>
+    <div class="sec"><h4>Description</h4><div>Tokens without an exp claim remain valid indefinitely if leaked.</div></div>
+    <div class="sec"><h4>Business Impact</h4><div>Limited direct impact, but contributes to overall attack surface and may aid an attacker during reconnaissance.</div></div>
+    <div class="sec"><h4>Proof of Concept</h4><pre>Token (truncated): eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4i...</pre></div>
+    <div class="sec"><h4>Suggested Remediation</h4><div>Use strong, rotated signing keys; pin the expected algorithm server-side; set short exp and reject alg=none.</div></div>
+  </div>
+  
 
   <h2>Appendix — Discovered Assets</h2>
-  {% if assets %}
+  
   <table class="assets">
     <thead><tr><th>Type</th><th>URL</th><th>Method</th><th>Source</th></tr></thead>
-    <tbody>{% for a in assets %}<tr><td>{{ a.type }}</td><td>{{ a.url }}</td><td>{{ a.method or "—" }}</td><td>{{ a.source_tool or "—" }}</td></tr>{% endfor %}</tbody>
+    <tbody><tr><td>endpoint</td><td>http://127.0.0.1:8911/</td><td>GET</td><td>crawler</td></tr><tr><td>endpoint</td><td>http://127.0.0.1:8911/.git/config</td><td>GET</td><td>crawler</td></tr><tr><td>api_route</td><td>http://127.0.0.1:8911/product.php?id=1</td><td>GET</td><td>crawler</td></tr><tr><td>api_route</td><td>http://127.0.0.1:8911/search.php?q=x</td><td>GET</td><td>crawler</td></tr></tbody>
   </table>
-  {% else %}<p class="empty">No assets discovered.</p>{% endif %}
+  
 
-  {% if secrets %}
+  
   <h2>Appendix — Secret Matches (unverified)</h2>
   <table class="assets">
     <thead><tr><th>Kind</th><th>Value</th></tr></thead>
-    <tbody>{% for s in secrets %}<tr><td>{{ s.kind }}</td><td class="mono">{{ s.matched_value }}</td></tr>{% endfor %}</tbody>
+    <tbody><tr><td>email</td><td class="mono">admin@demo.local</td></tr><tr><td>aws_access_key</td><td class="mono">AKIAIOSFODNN7EXAMPLE</td></tr><tr><td>jwt</td><td class="mono">eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.</td></tr></tbody>
   </table>
-  {% endif %}
+  
 
-  <footer>ReconToReport · Confidential · For authorized security testing only. Generated {{ generated_at }}.</footer>
+  <footer>ReconToReport · Confidential · For authorized security testing only. Generated 2026-10-02 12:08 UTC.</footer>
 </div>
 </body>
 </html>
