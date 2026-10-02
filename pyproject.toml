@@ -34,6 +34,7 @@ dev = [
 proxy = ["mitmproxy>=10.0"]          # Phase 2
 browser = ["playwright>=1.44"]       # Phase 2/3
 scan = ["PyJWT>=2.8"]                # Phase 4 (jwt handling helpers)
+ui = ["Flask>=3.0"]                  # browser-based UI (r2r ui)
 
 [project.scripts]
 recontoreport = "recontoreport.cli:main"

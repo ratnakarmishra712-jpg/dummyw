@@ -211,5 +211,18 @@ def _render(cfg: Config, orch: Orchestrator) -> None:
     return written
 
 
+@main.command("ui")
+@click.option("--port", default=8000, help="Port to serve on (default 8000).")
+@click.option("--no-open", is_flag=True, default=False, help="Don't auto-open the browser.")
+def ui_cmd(port: int, no_open: bool) -> None:
+    """Launch the browser-based UI (needs the 'ui' extra: pip install -e '.[ui]')."""
+    try:
+        from .web.app import main as run_ui
+    except ImportError:
+        console.print("[red]Flask not installed.[/] Run: pip install -e \".[ui]\"")
+        raise SystemExit(1)
+    run_ui(port=port, open_browser=not no_open)
+
+
 if __name__ == "__main__":
     main()

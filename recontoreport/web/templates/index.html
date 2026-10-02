@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport</title>
+<style>
+  :root { --fg:#1a1a1a; --mut:#666; --bd:#ddd; --accent:#1565c0; --ok:#2e7d32; --bad:#c62828; }
+  *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--fg);margin:0;background:#fafafa}
+  .wrap{max-width:820px;margin:0 auto;padding:24px 16px 64px}
+  h1{font-size:1.5rem;margin:0 0 4px} .sub{color:var(--mut);margin:0 0 20px;font-size:.9rem}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:16px}
+  label{display:block;font-weight:600;font-size:.85rem;margin:12px 0 4px}
+  input[type=text],input[type=password],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;font-size:.9rem;font-family:inherit}
+  textarea{min-height:52px;resize:vertical} .hint{color:var(--mut);font-size:.78rem;margin-top:3px}
+  .row{display:flex;gap:10px;flex-wrap:wrap} .row>div{flex:1;min-width:140px}
+  .phases{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+  .phases label{display:flex;align-items:center;gap:6px;font-weight:400;margin:0}
+  details{margin-top:8px} summary{cursor:pointer;font-weight:600;font-size:.9rem;color:var(--accent)}
+  button{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:11px 20px;font-size:.95rem;cursor:pointer}
+  button.sec{background:#eee;color:#222;padding:7px 12px;font-size:.82rem}
+  button:disabled{opacity:.5;cursor:default}
+  .authz{background:#fff8e1;border:1px solid #ffe082;padding:10px 12px;border-radius:6px;font-size:.85rem;margin-top:12px}
+  .authz label{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:0}
+  table{border-collapse:collapse;width:100%;font-size:.85rem;margin-top:10px}
+  th,td{border:1px solid var(--bd);padding:6px 8px;text-align:left} th{background:#fafafa}
+  .OK{color:var(--ok);font-weight:600}.FAILED{color:var(--bad);font-weight:600}.SKIPPED{color:var(--mut)}
+  pre{background:#0d1117;color:#c9d1d9;border-radius:6px;padding:10px;font-size:.78rem;max-height:260px;overflow:auto;white-space:pre-wrap}
+  .role{border:1px dashed var(--bd);border-radius:6px;padding:10px;margin-top:8px;position:relative}
+  .role .rm{position:absolute;top:6px;right:6px}
+  .err{color:var(--bad);font-size:.85rem}
+  a.report{display:inline-block;margin-top:12px;background:var(--ok);color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ReconToReport</h1>
+  <p class="sub">Authorized security testing only. Fill in a target, pick phases, click Scan.</p>
+
+  <div class="card" id="formCard">
+    <label>Target URL</label>
+    <input type="text" id="url" placeholder="https://your-authorized-target.com">
+    <div class="hint">You can omit http:// — it's added automatically.</div>
+
+    <label>Phases to run</label>
+    <div class="phases">
+      <label><input type="checkbox" class="ph" value="1" checked> 1 · Recon (crawl + subdomains)</label>
+      <label><input type="checkbox" class="ph" value="2" checked> 2 · Traffic/auth capture</label>
+      <label><input type="checkbox" class="ph" value="3" checked> 3 · Scan (nuclei, XSS, privesc)</label>
+      <label><input type="checkbox" class="ph" value="4" checked> 4 · Exploit (JWT, sqlmap)</label>
+      <label><input type="checkbox" class="ph" value="5" checked> 5 · Harvest (secrets)</label>
+    </div>
+    <div class="hint">Dependencies run automatically (e.g. picking 4 also runs 1 and 3).</div>
+
+    <details>
+      <summary>Discovery options (wordlist, nuclei, scope)</summary>
+      <label>Wordlist file path (for path brute-forcing — optional)</label>
+      <input type="text" id="wordlist" placeholder="/Users/you/SecLists/Discovery/Web-Content/common.txt">
+      <div class="hint">Leave blank to skip brute-forcing. Download one: <code>git clone --depth 1 https://github.com/danielmiessler/SecLists.git ~/SecLists</code></div>
+      <div class="row">
+        <div><label>nuclei tags (comma-sep, optional)</label><input type="text" id="nuclei_tags" placeholder="misconfiguration,exposure,cve"></div>
+        <div><label>nuclei max URLs</label><input type="text" id="nuclei_max_urls" value="100"></div>
+      </div>
+      <div class="hint">Leave tags blank to use nuclei's full default set (slow on first run).</div>
+      <label>Scope — include hosts (one per line, optional)</label>
+      <textarea id="scope_include" placeholder="auto-filled from the target host"></textarea>
+      <label>Scope — exclude hosts (one per line, optional)</label>
+      <textarea id="scope_exclude"></textarea>
+    </details>
+
+    <details>
+      <summary>Login / auth roles (needed to scan pages behind a login)</summary>
+      <div class="hint">Add a role so the tool logs in and reaches the app. Selectors are the login form's field names (ask me if unsure).</div>
+      <div id="roles"></div>
+      <button class="sec" type="button" onclick="addRole()">+ Add login role</button>
+    </details>
+
+    <div class="authz">
+      <label><input type="checkbox" id="authorized">
+        <span>I have explicit written authorization to test this target. (Required for active phases 1–4.)</span></label>
+    </div>
+
+    <div style="margin-top:16px">
+      <button id="go" onclick="startScan()">Scan</button>
+      <span id="formErr" class="err"></span>
+    </div>
+  </div>
+
+  <div class="card" id="progress" style="display:none">
+    <h3 id="pstatus" style="margin:0 0 8px">Running…</h3>
+    <div id="ptable"></div>
+    <a id="reportLink" class="report" style="display:none" target="_blank">Open report ↗</a>
+    <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--mut)">Live log</h4>
+    <pre id="plog"></pre>
+  </div>
+</div>
+
+<script>
+function addRole(){
+  const d=document.createElement('div'); d.className='role';
+  d.innerHTML=`<button class="sec rm" type="button" onclick="this.parentNode.remove()">remove</button>
+    <div class="row"><div><label>Role name</label><input type="text" class="r_name" value="user"></div>
+    <div><label>Privilege level</label><input type="text" class="r_priv" value="1"></div></div>
+    <label>Login page URL</label><input type="text" class="r_login" placeholder="https://site/login">
+    <div class="row"><div><label>Username</label><input type="text" class="r_user"></div>
+    <div><label>Password</label><input type="password" class="r_pass"></div></div>
+    <div class="row"><div><label>Username field selector</label><input type="text" class="r_us" value="input[name=username]"></div>
+    <div><label>Password field selector</label><input type="text" class="r_ps" value="input[name=password]"></div></div>
+    <label>Submit button selector</label><input type="text" class="r_sub" value="button[type=submit]">`;
+  document.getElementById('roles').appendChild(d);
+}
+function roles(){
+  return [...document.querySelectorAll('.role')].map(r=>({
+    name:r.querySelector('.r_name').value, privilege_level:r.querySelector('.r_priv').value,
+    login_url:r.querySelector('.r_login').value, username:r.querySelector('.r_user').value,
+    password:r.querySelector('.r_pass').value, username_selector:r.querySelector('.r_us').value,
+    password_selector:r.querySelector('.r_ps').value, submit_selector:r.querySelector('.r_sub').value,
+  }));
+}
+async function startScan(){
+  const err=document.getElementById('formErr'); err.textContent='';
+  const url=document.getElementById('url').value.trim();
+  if(!url){err.textContent='Enter a target URL.';return;}
+  const phases=[...document.querySelectorAll('.ph:checked')].map(c=>c.value);
+  if(!phases.length){err.textContent='Pick at least one phase.';return;}
+  const body={url,phases,authorized:document.getElementById('authorized').checked,
+    wordlist:document.getElementById('wordlist').value.trim(),
+    nuclei_tags:document.getElementById('nuclei_tags').value.trim(),
+    nuclei_max_urls:document.getElementById('nuclei_max_urls').value.trim(),
+    scope_include:document.getElementById('scope_include').value,
+    scope_exclude:document.getElementById('scope_exclude').value,
+    auth_roles:roles()};
+  document.getElementById('go').disabled=true;
+  const r=await fetch('/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const {run_id}=await r.json();
+  document.getElementById('progress').style.display='block';
+  poll(run_id);
+}
+async function poll(id){
+  const r=await fetch('/status/'+id); const s=await r.json();
+  document.getElementById('plog').textContent=(s.log||[]).join('\n');
+  document.getElementById('plog').scrollTop=1e9;
+  if(s.phases&&s.phases.length){
+    let h='<table><tr><th>Phase</th><th>Result</th><th>Assets</th><th>Findings</th></tr>';
+    for(const p of s.phases){h+=`<tr><td>${p.number} ${p.name}</td><td class="${p.result}">${p.result}</td><td>${p.assets}</td><td>${p.findings}</td></tr>`;}
+    h+='</table>'; document.getElementById('ptable').innerHTML=h;
+  }
+  const st=document.getElementById('pstatus');
+  if(s.status==='running'){st.textContent='Running…'; setTimeout(()=>poll(id),1500);}
+  else if(s.status==='done'){st.textContent='Done ✓'; document.getElementById('go').disabled=false;
+    if(s.has_report){const a=document.getElementById('reportLink');a.href='/report/'+id;a.style.display='inline-block';}}
+  else {st.textContent='Error'; st.className='FAILED'; document.getElementById('go').disabled=false;}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+"""Local Flask UI: drive the whole pipeline from a browser form.
+
+Every setting (target, scope, phases, wordlist, nuclei tags, auth roles) is a
+form field — no config files or terminal flags. Runs live on the user's machine
+only; nothing is exposed externally.
+"""
+
+from __future__ import annotations
+
+import logging
+import threading
+import uuid
+from dataclasses import dataclass, field
+from pathlib import Path
+from urllib.parse import urlparse
+
+from flask import Flask, jsonify, request, send_file
+
+from ..config import (
+    AuthRole,
+    Config,
+    PhasePolicy,
+    ProxyConfig,
+    ScopeConfig,
+    normalize_url,
+)
+from ..orchestrator import Orchestrator
+from ..phases import resolve_phases
+
+DATA_DIR = Path("r2r_ui_data")
+
+
+@dataclass
+class Run:
+    id: str
+    status: str = "running"          # running | done | error
+    log: list[str] = field(default_factory=list)
+    phases: list[dict] = field(default_factory=list)
+    report_path: str | None = None
+    error: str | None = None
+
+
+RUNS: dict[str, Run] = {}
+
+
+class _ListHandler(logging.Handler):
+    def __init__(self, run: Run) -> None:
+        super().__init__()
+        self.run = run
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            self.run.log.append(self.format(record))
+        except Exception:
+            pass
+
+
+def _build_config(form: dict) -> tuple[Config, list[int], bool]:
+    url = normalize_url(form.get("url", ""))
+    host = urlparse(url).hostname or ""
+
+    include = [s.strip() for s in (form.get("scope_include") or "").splitlines() if s.strip()]
+    if not include and host:
+        include = [host, f"*.{host}"]
+    exclude = [s.strip() for s in (form.get("scope_exclude") or "").splitlines() if s.strip()]
+
+    tags = [t.strip() for t in (form.get("nuclei_tags") or "").split(",") if t.strip()]
+
+    roles: list[AuthRole] = []
+    for r in form.get("auth_roles") or []:
+        if not (r.get("login_url") and r.get("username")):
+            continue
+        roles.append(AuthRole(
+            name=r.get("name") or "role",
+            privilege_level=int(r.get("privilege_level") or 0),
+            login_url=r.get("login_url", ""),
+            username=r.get("username", ""),
+            password=r.get("password", ""),
+            username_selector=r.get("username_selector") or "input[name=username]",
+            password_selector=r.get("password_selector") or "input[name=password]",
+            submit_selector=r.get("submit_selector") or "button[type=submit]",
+            success_selector=r.get("success_selector") or "",
+        ))
+
+    run_id = form["_run_id"]
+    base = DATA_DIR / run_id
+    base.mkdir(parents=True, exist_ok=True)
+
+    cfg = Config(
+        target_url=url,
+        engagement_ref=form.get("engagement_ref", ""),
+        scope=ScopeConfig(include=include, exclude=exclude),
+        database_url=f"sqlite:///{(base / 'scan.db').resolve()}",
+        output_dir=base / "reports",
+        output_formats=["html"],
+        tools={},
+        wordlists={"content_discovery": form.get("wordlist", "")},
+        nuclei={"tags": tags, "templates_dir": form.get("nuclei_templates_dir", ""),
+                "max_urls": int(form.get("nuclei_max_urls") or 100)},
+        api_keys={},
+        phase_policy=PhasePolicy(),
+        proxy=ProxyConfig(capture_window_seconds=int(form.get("capture_window") or 30)),
+        auth_roles=roles,
+    )
+    phases, _ = resolve_phases([int(p) for p in form.get("phases") or [1]])
+    return cfg, phases, bool(form.get("authorized"))
+
+
+def _run_scan(form: dict) -> None:
+    run = RUNS[form["_run_id"]]
+    handler = _ListHandler(run)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    root = logging.getLogger("recontoreport")
+    root.setLevel(logging.INFO)
+    root.addHandler(handler)
+    try:
+        cfg, phases, authorized = _build_config(form)
+        run.log.append(f"Target: {cfg.target_url}  Phases: {phases}")
+        orch = Orchestrator(cfg, authorized=authorized)
+        results = orch.run(phases)
+        run.phases = [{
+            "number": r.number, "name": r.name,
+            "result": "SKIPPED" if r.skipped else ("OK" if r.ok else "FAILED"),
+            "assets": r.assets_created, "findings": r.findings_created,
+            "errors": r.errors,
+        } for r in results]
+        # render report
+        from ..report import generate_reports
+        from sqlalchemy import select
+        from ..models import Target
+        from ..db import make_session_factory
+        factory = make_session_factory(orch.engine)
+        s = factory()
+        t = s.execute(select(Target).where(Target.url == cfg.target_url)).scalar_one_or_none()
+        s.close()
+        if t:
+            written = generate_reports(factory, t.id, cfg.output_dir, ["html"])
+            if written:
+                run.report_path = str(Path(written[0]).resolve())
+        run.status = "done"
+        run.log.append("Scan complete.")
+    except Exception as exc:  # noqa: BLE001
+        run.status = "error"
+        run.error = f"{type(exc).__name__}: {exc}"
+        run.log.append(f"ERROR: {run.error}")
+    finally:
+        root.removeHandler(handler)
+
+
+def create_app() -> Flask:
+    app = Flask(__name__)
+    tpl = (Path(__file__).parent / "templates" / "index.html").read_text()
+
+    @app.get("/")
+    def index():  # noqa: ANN202
+        return tpl
+
+    @app.post("/scan")
+    def scan():  # noqa: ANN202
+        form = request.get_json(force=True)
+        run_id = uuid.uuid4().hex[:12]
+        form["_run_id"] = run_id
+        RUNS[run_id] = Run(id=run_id)
+        threading.Thread(target=_run_scan, args=(form,), daemon=True).start()
+        return jsonify({"run_id": run_id})
+
+    @app.get("/status/<run_id>")
+    def status(run_id):  # noqa: ANN202
+        run = RUNS.get(run_id)
+        if not run:
+            return jsonify({"error": "unknown run"}), 404
+        return jsonify({
+            "status": run.status, "log": run.log, "phases": run.phases,
+            "has_report": bool(run.report_path), "error": run.error,
+        })
+
+    @app.get("/report/<run_id>")
+    def report(run_id):  # noqa: ANN202
+        run = RUNS.get(run_id)
+        if not run or not run.report_path:
+            return "No report", 404
+        return send_file(run.report_path)
+
+    return app
+
+
+def main(host: str = "127.0.0.1", port: int = 8000, open_browser: bool = True) -> None:
+    app = create_app()
+    url = f"http://{host}:{port}/"
+    if open_browser:
+        import webbrowser
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    print(f"ReconToReport UI running at {url}  (Ctrl+C to stop)")
+    app.run(host=host, port=port, debug=False)
