@@ -54,7 +54,9 @@
   <div class="card" id="formCard">
     <label>Target URL</label>
     <input type="text" id="url" placeholder="https://your-authorized-target.com">
-    <div class="hint">You can omit http:// — it's added automatically.</div>
+    <div class="hint">You can omit http:// — it's added automatically.
+      &nbsp;<a href="#" onclick="startDemo();return false" style="color:var(--yellow)">▸ Start demo target</a>
+      (zero-install local vulnerable app, auto-fills the URL)</div>
 
     <label>Phases</label>
     <div class="phases">
@@ -124,6 +126,12 @@ function roles(){
     password:r.querySelector('.r_pass').value, username_selector:r.querySelector('.r_us').value,
     password_selector:r.querySelector('.r_ps').value, submit_selector:r.querySelector('.r_sub').value,
   }));
+}
+async function startDemo(){
+  const r=await fetch('/demo',{method:'POST'}); const {url}=await r.json();
+  document.getElementById('url').value=url;
+  document.getElementById('authorized').checked=true;
+  document.getElementById('formErr').textContent='Demo target running — click Run scan.';
 }
 async function startScan(){
   const err=document.getElementById('formErr'); err.textContent='';

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — http://127.0.0.1:8911/</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#111; --fg:#f4f4f4; --mut:#8a8a8a; --bd:#2a2a2a;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff;
+    --critical:#b14cff; --high:#ff4d4d; --medium:#f2a100; --low:#f2c200; --info:#5b8cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;line-height:1.55;
+    background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:4px 4px}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 18px 80px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
+  h1,h2,h3{font-weight:800;letter-spacing:-.01em;text-transform:uppercase}
+  header{border-bottom:1px solid var(--bd);padding-bottom:16px;margin-bottom:8px;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .logo{font-size:1.9rem;font-weight:900;letter-spacing:-.04em}
+  .logo b{color:var(--green)}
+  header h1{font-size:1.1rem;margin:6px 0 0}
+  .meta{color:var(--mut);font-size:.72rem}
+  .meta .mono{color:var(--green)}
+  .dossier{color:var(--red);font-size:.72rem;margin:14px 0 2px}
+  .authz{border:1px dashed var(--bd);color:var(--mut);padding:10px 14px;border-radius:8px;
+    margin:16px 0;font-size:.78rem}
+  .counts{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+  .pill{padding:7px 14px;border-radius:999px;font-size:.72rem;font-weight:700;color:#000}
+  .pill b{opacity:.7;margin-left:6px}
+  .sev-critical{background:var(--critical);color:#fff}.sev-high{background:var(--high);color:#fff}
+  .sev-medium{background:var(--medium)}.sev-low{background:var(--low)}.sev-info{background:var(--info);color:#fff}
+  h2.sevhead{font-size:.8rem;color:var(--mut);border-bottom:1px solid var(--bd);
+    padding-bottom:8px;margin:34px 0 4px;letter-spacing:.14em}
+  .finding{background:var(--panel);border:1px solid var(--bd);border-left:4px solid var(--bd);
+    border-radius:8px;padding:16px 18px;margin:14px 0}
+  .finding.crit{border-left-color:var(--critical)}.finding.high{border-left-color:var(--high)}
+  .finding.med{border-left-color:var(--medium)}.finding.low{border-left-color:var(--low)}
+  .finding.inf{border-left-color:var(--info)}
+  .finding h3{margin:0 0 8px;font-size:1.05rem}
+  .tags{font-size:.68rem;margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
+  .tags span{border:1px solid var(--bd);border-radius:999px;padding:3px 9px;color:var(--mut)}
+  .field{margin:9px 0}.field b{display:block;font-size:.66rem;color:var(--green);margin-bottom:3px;letter-spacing:.1em}
+  pre{background:#000;border:1px solid var(--bd);border-radius:6px;padding:10px;overflow-x:auto;
+    font-size:.78rem;white-space:pre-wrap;color:#c9d1d9}
+  table{border-collapse:collapse;width:100%;font-size:.8rem;margin:10px 0}
+  th,td{border:1px solid var(--bd);padding:7px 9px;text-align:left}
+  th{background:#000;color:var(--mut);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase}
+  .empty{color:var(--mut);font-style:italic}
+  footer{margin-top:50px;color:var(--mut);font-size:.72rem;border-top:1px solid var(--bd);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="logo">RECON<b>//</b>REPORT</div>
+      <h1>Vulnerability Assessment Dossier</h1>
+    </div>
+    <div class="meta">
+      TARGET <span class="mono">http://127.0.0.1:8911/</span><br>
+      
+      GENERATED <span class="mono">2026-10-02 11:33 UTC</span>
+    </div>
+  </header>
+
+  <div class="authz">Conducted under explicit written authorization. Testing limited to the agreed scope.</div>
+
+  <div class="dossier mono">// Summary</div>
+  <div class="counts">
+    
+    <span class="pill sev-critical mono">critical <b>1</b></span>
+    
+    <span class="pill sev-high mono">high <b>0</b></span>
+    
+    <span class="pill sev-medium mono">medium <b>0</b></span>
+    
+    <span class="pill sev-low mono">low <b>1</b></span>
+    
+    <span class="pill sev-info mono">info <b>0</b></span>
+    
+  </div>
+  <p class="meta mono">2 findings · 4 assets</p>
+
+  <h2 class="sevhead mono">Findings</h2>
+  
+  
+  
+    <div class="dossier mono">// critical severity</div>
+    
+    <article class="finding crit">
+      <h3>JWT accepts 'alg: none' (unsigned)</h3>
+      <div class="tags mono">
+        <span>CWE-347</span>
+        <span>A02:2021 Cryptographic Failures</span>
+        <span>conf: firm</span><span>src: jwt_analysis</span><span>open</span>
+      </div>
+      
+      <div class="field"><b>Description</b>The token header declares alg=none, meaning it carries no signature.</div>
+      <div class="field"><b>Proof of concept</b><pre>Token (truncated): eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4i...</pre></div>
+      <div class="field"><b>Remediation</b>Use strong, rotated signing keys; pin the expected algorithm server-side; set short exp and reject alg=none.</div>
+    </article>
+    
+  
+    <div class="dossier mono">// low severity</div>
+    
+    <article class="finding low">
+      <h3>JWT has no expiry (exp) claim</h3>
+      <div class="tags mono">
+        <span>CWE-613</span>
+        <span>A02:2021 Cryptographic Failures</span>
+        <span>conf: firm</span><span>src: jwt_analysis</span><span>open</span>
+      </div>
+      
+      <div class="field"><b>Description</b>Tokens without an exp claim remain valid indefinitely if leaked.</div>
+      <div class="field"><b>Proof of concept</b><pre>Token (truncated): eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4i...</pre></div>
+      <div class="field"><b>Remediation</b>Use strong, rotated signing keys; pin the expected algorithm server-side; set short exp and reject alg=none.</div>
+    </article>
+    
+  
+
+  <h2 class="sevhead mono">Discovered assets</h2>
+  
+  <table>
+    <thead><tr><th>Type</th><th>URL</th><th>Method</th><th>Source</th><th>In scope</th></tr></thead>
+    <tbody>
+    
+      <tr><td>endpoint</td><td>http://127.0.0.1:8911/</td><td>GET</td>
+      <td>crawler</td><td>—</td></tr>
+    
+      <tr><td>api_route</td><td>http://127.0.0.1:8911/product.php?id=1</td><td>GET</td>
+      <td>crawler</td><td>—</td></tr>
+    
+      <tr><td>api_route</td><td>http://127.0.0.1:8911/search.php?q=x</td><td>GET</td>
+      <td>crawler</td><td>—</td></tr>
+    
+      <tr><td>endpoint</td><td>http://127.0.0.1:8911/.git/config</td><td>GET</td>
+      <td>crawler</td><td>—</td></tr>
+    
+    </tbody>
+  </table>
+  
+
+  
+  <h2 class="sevhead mono">Secret matches (unverified)</h2>
+  <table>
+    <thead><tr><th>Kind</th><th>Value</th><th>Context</th></tr></thead>
+    <tbody><tr><td>email</td><td>admin@demo.local</td><td>taW4ifQ. AKIAIOSFODNN7EXAMPLE admin@demo.local --></body></html></td></tr><tr><td>aws_access_key</td><td>AKIAIOSFODNN7EXAMPLE</td><td>5lIn0.eyJ1c2VyIjoiYWRtaW4ifQ. AKIAIOSFODNN7EXAMPLE admin@demo.local --></body></</td></tr><tr><td>jwt</td><td>eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.</td><td>href="/.git/config">g</a><!-- eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ. AKIAIOSFODNN7EXAMPLE admin@de</td></tr></tbody>
+  </table>
+  
+
+  <footer class="mono">Generated by ReconToReport · for authorized security testing only</footer>
+</div>
+</body>
+</html>
