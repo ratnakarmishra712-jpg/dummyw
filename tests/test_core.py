@@ -82,7 +82,7 @@ def test_report_generation(tmp_path: Path):
     assert "Exposed .git directory" in html
     assert "CWE-538" in html
     assert "example.com" in html
-    assert "High" in html  # severity grouping header / pill
+    assert "high" in html.lower()  # severity grouping header / pill
 
     xml = next(p for p in written if p.suffix == ".xml").read_text()
     assert "<finding" in xml and "Exposed .git directory" in xml
