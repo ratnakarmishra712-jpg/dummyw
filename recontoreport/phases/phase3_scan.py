@@ -104,8 +104,8 @@ class ScanPhase(Phase):
         nuclei_timeout = int(nuclei_cfg.get("timeout_seconds", 180))
         try:
             res = run(cmd, timeout=nuclei_timeout)
-        except ToolNotFoundError as exc:
-            errors.append(str(exc))
+        except ToolNotFoundError:
+            self.log.info("nuclei not installed — skipping (optional).")
             Path(urls_path).unlink(missing_ok=True)
             return 0
 

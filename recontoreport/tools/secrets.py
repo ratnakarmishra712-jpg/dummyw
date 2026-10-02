@@ -15,7 +15,7 @@ _PATTERNS: dict[str, re.Pattern[str]] = {
     "private_key_block": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----"),
     "google_api_key": re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b"),
     "slack_token": re.compile(r"\bxox[baprs]-[0-9A-Za-z-]{10,}\b"),
-    "jwt": re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*\b"),
+    "jwt": re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*"),
     "generic_api_key": re.compile(r"(?i)(?:api[_-]?key|secret|token)\s*[=:]\s*['\"]([A-Za-z0-9_\-]{16,})['\"]"),
     # Candidate card numbers (13-16 digits, optional separators); Luhn-filtered below.
     "credit_card": re.compile(r"\b(?:\d[ -]?){13,16}\b"),

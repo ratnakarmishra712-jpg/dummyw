@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass
 
 # A JWT: three base64url segments separated by dots; payload starts with eyJ.
-_JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*\b")
+_JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*")
 
 # Small built-in list of commonly-used weak HMAC secrets.
 DEFAULT_WEAK_SECRETS = [
