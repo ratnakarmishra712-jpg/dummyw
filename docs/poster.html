@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Research Poster</title>
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#121216; --panel2:#17171c; --fg:#f1f1f3; --mut:#8a8a93; --bd:#262630;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff; --purple:#b14cff;
+    --critical:#b14cff; --high:#ff4d4d; --medium:#f2a100; --low:#f2c200; --info:#5b8cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  /* Poster canvas: ISO A2 portrait ratio (420x594). Scales to screen width. */
+  .poster{width:1240px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.022) 1px,transparent 1px);background-size:5px 5px;
+    padding:46px 46px 38px;position:relative;overflow:hidden}
+  /* header */
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--green);padding-bottom:22px}
+  .brand{font-size:1.1rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--green)}
+  h1{font-size:3.5rem;line-height:.98;font-weight:900;letter-spacing:-.03em;margin:14px 0 6px}
+  h1 em{color:var(--green);font-style:normal}
+  .tag{font-size:1.15rem;color:var(--mut);max-width:760px;line-height:1.45}
+  .byline{text-align:right;font-size:.72rem;color:var(--mut);line-height:1.7;letter-spacing:.04em}
+  .byline .k{color:var(--green)}
+  /* grid */
+  .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:26px}
+  .box{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:20px 22px}
+  .box.span2{grid-column:span 2}.box.span3{grid-column:span 3}
+  h2{font-size:.76rem;text-transform:uppercase;letter-spacing:.16em;color:var(--green);margin:0 0 12px;
+    display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:16px;height:2px;background:var(--green)}
+  p{margin:0 0 10px;line-height:1.55;font-size:.95rem;color:#dcdce0}
+  .lead{font-size:1.02rem;color:#eaeaee}
+  ul{margin:0;padding-left:18px}li{line-height:1.5;margin-bottom:7px;font-size:.92rem;color:#dcdce0}
+  li b{color:#fff}
+  /* pipeline diagram */
+  .pipe{display:flex;align-items:stretch;gap:0;margin-top:4px}
+  .stage{flex:1;background:var(--panel2);border:1px solid var(--bd);border-radius:10px;padding:12px 10px;text-align:center;position:relative}
+  .stage .n{font-size:.62rem;color:var(--mut);letter-spacing:.12em}
+  .stage .t{font-weight:800;font-size:.9rem;margin:4px 0 4px}
+  .stage .d{font-size:.68rem;color:var(--mut);line-height:1.35}
+  .arrow{display:flex;align-items:center;color:var(--green);font-weight:900;padding:0 6px}
+  .s1{box-shadow:inset 0 3px 0 var(--green)}.s2{box-shadow:inset 0 3px 0 var(--blue)}
+  .s3{box-shadow:inset 0 3px 0 var(--yellow)}.s4{box-shadow:inset 0 3px 0 var(--red)}
+  .s5{box-shadow:inset 0 3px 0 var(--purple)}
+  /* kpi */
+  .kpis{display:flex;gap:14px}
+  .kpi{flex:1;text-align:center}.kpi .n{font-size:2.6rem;font-weight:900;line-height:1}
+  .kpi .l{font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin-top:6px}
+  /* bars */
+  .bars{display:flex;align-items:flex-end;gap:16px;height:150px}
+  .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%}
+  .bar .col{width:100%;border-radius:7px 7px 0 0;margin-top:auto}
+  .bar .v{font-weight:800}.bar .lab{font-size:.6rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+  .c-critical{background:var(--critical)}.c-high{background:var(--high)}.c-medium{background:var(--medium)}.c-low{background:var(--low)}.c-info{background:var(--info)}
+  .stack{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .chip{font-size:.7rem;border:1px solid var(--bd);border-radius:999px;padding:4px 11px;color:#cfcfd6;background:var(--panel2)}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--bd);color:var(--mut);font-size:.72rem;letter-spacing:.04em}
+  .glow{position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(130px);opacity:.14;pointer-events:none}
+  .g1{background:var(--green);top:-180px;right:-120px}.g2{background:var(--blue);bottom:-220px;left:-160px}
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="glow g1"></div><div class="glow g2"></div>
+
+  <div class="hdr">
+    <div>
+      <div class="brand">RECON<b>//</b>REPORT</div>
+      <h1>From Raw URL to<br><em>Vulnerability Report</em>, Automatically</h1>
+      <div class="tag">An orchestration framework that chains open-source security tools into a single,
+        authorization-gated pipeline — turning one target URL into a structured, client-ready assessment.</div>
+    </div>
+    <div class="byline">
+      <div><span class="k">PROJECT</span> ReconToReport</div>
+      <div><span class="k">DOMAIN</span> Offensive Security · Automation</div>
+      <div><span class="k">BUILD</span> Python · SQLite · Flask</div>
+      <div><span class="k">SCOPE</span> Authorized testing only</div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <!-- Abstract -->
+    <div class="box span2">
+      <h2>Abstract</h2>
+      <p class="lead">Professional web-application testing means juggling a dozen disconnected tools and
+        hand-stitching their output into a report. ReconToReport unifies that workflow.</p>
+      <p>A single Python orchestrator drives five phases — reconnaissance, traffic capture, automated
+        scanning, targeted exploitation, and harvesting — writing every discovered asset, transaction,
+        and finding into one shared data model. A browser dashboard runs scans and a Jinja templating
+        layer renders a severity-ranked report with CVSS, impact, and remediation per finding. Every
+        active phase is blocked behind an explicit authorization gate.</p>
+    </div>
+    <!-- At a glance -->
+    <div class="box">
+      <h2>At a glance</h2>
+      <div class="kpis">
+        <div class="kpi"><div class="n" style="color:var(--green)">5</div><div class="l">Phases</div></div>
+        <div class="kpi"><div class="n" style="color:var(--blue)">8</div><div class="l">Data tables</div></div>
+        <div class="kpi"><div class="n" style="color:var(--yellow)">10+</div><div class="l">Tools wired</div></div>
+      </div>
+      <p style="margin-top:14px;font-size:.84rem;color:var(--mut)">One command (<span class="mono" style="color:var(--green)">r2r ui</span>) launches a full dashboard — no config files required.</p>
+    </div>
+
+    <!-- Pipeline -->
+    <div class="box span3">
+      <h2>The pipeline</h2>
+      <div class="pipe">
+        <div class="stage s1"><div class="n mono">PHASE 1</div><div class="t">Recon</div><div class="d">crawler · subfinder · ffuf — maps attack surface</div></div>
+        <div class="arrow">→</div>
+        <div class="stage s2"><div class="n mono">PHASE 2</div><div class="t">Traffic / Auth</div><div class="d">mitmproxy capture · Playwright login</div></div>
+        <div class="arrow">→</div>
+        <div class="stage s3"><div class="n mono">PHASE 3</div><div class="t">Scan</div><div class="d">nuclei · DOM-XSS canary · privilege diff</div></div>
+        <div class="arrow">→</div>
+        <div class="stage s4"><div class="n mono">PHASE 4</div><div class="t">Exploit</div><div class="d">JWT analysis · sqlmap</div></div>
+        <div class="arrow">→</div>
+        <div class="stage s5"><div class="n mono">PHASE 5</div><div class="t">Harvest</div><div class="d">secret scraping · report render</div></div>
+      </div>
+      <p style="margin-top:12px;font-size:.8rem;color:var(--mut)">Phases declare dependencies, so selecting one automatically runs its prerequisites. A failure in any phase is isolated — the run continues.</p>
+    </div>
+
+    <!-- Method -->
+    <div class="box">
+      <h2>Method &amp; design</h2>
+      <ul>
+        <li><b>Shared data model</b> — targets, assets, transactions, findings, evidence, secrets, auth contexts, reports.</li>
+        <li><b>Normalization</b> — each tool's output is parsed into one schema, so phases build on each other.</li>
+        <li><b>Authorization gate</b> — active phases refuse to run without explicit consent.</li>
+        <li><b>Bounded execution</b> — per-tool time budgets prevent runaway scans.</li>
+      </ul>
+    </div>
+
+    <!-- Results -->
+    <div class="box">
+      <h2>Results</h2>
+      <p style="font-size:.86rem">Live run against a public, intentionally-vulnerable target
+        (Google Firing Range):</p>
+      <div class="bars">
+        <div class="bar"><div class="v" style="color:var(--high)">20</div><div class="col c-high" style="height:100%"></div><div class="lab">XSS</div></div>
+        <div class="bar"><div class="v" style="color:var(--green)">326</div><div class="col c-info" style="height:88%"></div><div class="lab">Assets</div></div>
+        <div class="bar"><div class="v" style="color:var(--critical)">1</div><div class="col c-critical" style="height:20%"></div><div class="lab">JWT*</div></div>
+        <div class="bar"><div class="v" style="color:var(--yellow)">3</div><div class="col c-low" style="height:30%"></div><div class="lab">Secrets*</div></div>
+      </div>
+      <p style="margin-top:10px;font-size:.72rem;color:var(--mut)">*critical JWT &amp; secret findings verified on a controlled target.</p>
+    </div>
+
+    <!-- Output / stack -->
+    <div class="box">
+      <h2>Output &amp; stack</h2>
+      <ul>
+        <li><b>Dashboard</b> — KPI cards, severity chart, findings table, run history.</li>
+        <li><b>Report</b> — per-finding CVSS, business &amp; technical impact, PoC, remediation.</li>
+      </ul>
+      <div class="stack" style="margin-top:12px">
+        <span class="chip">Python</span><span class="chip">SQLAlchemy</span><span class="chip">Alembic</span>
+        <span class="chip">Flask</span><span class="chip">Jinja2</span><span class="chip">mitmproxy</span>
+        <span class="chip">Playwright</span><span class="chip">nuclei</span><span class="chip">sqlmap</span><span class="chip">subfinder</span>
+      </div>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="box span3">
+      <h2>Contribution &amp; future work</h2>
+      <p>ReconToReport lowers the barrier between a target and a professional assessment: the operator
+        supplies a URL and authorization; the system handles discovery, testing, correlation, and
+        reporting. The shared data model makes findings from different tools comparable and the whole run
+        reproducible. <b>Next:</b> active parameter fuzzing for deeper injection coverage, out-of-band
+        (interactsh) confirmation, host liveness filtering before scanning, and exportable PDF/CSV reports.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="mono">RECON//REPORT · authorized security testing only</div>
+    <div class="mono">URL → RECON → TRAFFIC → SCAN → EXPLOIT → HARVEST → REPORT</div>
+  </div>
+</div>
+</body>
+</html>
