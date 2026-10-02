@@ -148,9 +148,9 @@ class ReconPhase(Phase):
         wordlist = (self.config.wordlists or {}).get("content_discovery") or ""
         wordlist = str(Path(wordlist).expanduser()) if wordlist else ""
         if not wordlist:
-            errors.append(
-                "ffuf: no wordlist configured (wordlists.content_discovery). "
-                "Set it in config.yaml — no default is assumed."
+            # Optional step, not an error — don't fail the phase over it.
+            self.log.info(
+                "ffuf: skipped (no wordlists.content_discovery configured)."
             )
             return 0, 0
         if not Path(wordlist).is_file():
