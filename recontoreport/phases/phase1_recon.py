@@ -178,7 +178,7 @@ class ReconPhase(Phase):
             "-s",  # silent
         ]
         try:
-            res = run(cmd, timeout=self.config.phase_policy.tool_timeout)
+            res = run(cmd, timeout=120)
         except ToolNotFoundError as exc:
             errors.append(str(exc))
             return 0, 0
