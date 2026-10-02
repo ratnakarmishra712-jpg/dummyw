@@ -71,7 +71,7 @@ class ScanPhase(Phase):
     def _run_nuclei(self, errors: list[str]) -> int:
         binary = self.config.tool("nuclei")
         nuclei_cfg = self.config.nuclei or {}
-        max_urls = int(nuclei_cfg.get("max_urls", 100))
+        max_urls = int(nuclei_cfg.get("max_urls", 25))
         urls = self._in_scope_urls(limit=max_urls)
         if not urls:
             errors.append("nuclei: no in-scope URLs to scan")
@@ -92,19 +92,18 @@ class ScanPhase(Phase):
         tags = nuclei_cfg.get("tags") or []
         if templates_dir:
             cmd += ["-t", str(Path(templates_dir).expanduser())]
-        if tags:
+        elif tags:
             cmd += ["-tags", ",".join(tags)]
-        if not templates_dir and not tags:
-            self.log.warning(
-                "nuclei: no templates_dir/tags configured — using the full default "
-                "template set against %s URL(s). FIRST RUN DOWNLOADS ~10k templates "
-                "(several minutes, no output meanwhile) and the scan itself is slow. "
-                "To speed it up, set nuclei.tags (e.g. ['misconfiguration','exposure']) "
-                "in config.yaml.", len(urls),
-            )
+        else:
+            # Fast, high-signal default instead of the full ~10k-template set.
+            default_tags = "misconfiguration,exposure,default-login,takeover,tech"
+            cmd += ["-tags", default_tags]
+            self.log.info("nuclei: using fast default tags (%s); set nuclei.tags to customize.", default_tags)
 
+        # nuclei gets its OWN budget so it can't eat the whole phase timeout.
+        nuclei_timeout = int(nuclei_cfg.get("timeout_seconds", 180))
         try:
-            res = run(cmd, timeout=self.config.phase_policy.tool_timeout)
+            res = run(cmd, timeout=nuclei_timeout)
         except ToolNotFoundError as exc:
             errors.append(str(exc))
             Path(urls_path).unlink(missing_ok=True)
@@ -119,7 +118,14 @@ class ScanPhase(Phase):
             Path(urls_path).unlink(missing_ok=True)
             Path(out_path).unlink(missing_ok=True)
 
-        if not lines and not res.ok:
+        if res.timed_out:
+            # Not a phase failure — just note it and keep going (no retry).
+            self.log.warning(
+                "nuclei: hit its %ss budget and was stopped; parsed %s partial result(s). "
+                "Lower nuclei.max_urls or set narrower nuclei.tags to finish faster.",
+                nuclei_timeout, len(lines),
+            )
+        elif not lines and not res.ok:
             errors.append(f"nuclei: exited {res.returncode}: {res.stderr.strip()[:300]}")
             return 0
 
