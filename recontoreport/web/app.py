@@ -242,6 +242,36 @@ def create_app() -> Flask:
                 out.append({"id": d.name, "target": target, "when": when})
         return jsonify(out[:50])
 
+    @app.get("/findings/<run_id>")
+    def findings(run_id):  # noqa: ANN202
+        import sqlite3
+        safe = "".join(c for c in run_id if c.isalnum() or c in "-_")
+        db = DATA_DIR / safe / "scan.db"
+        if not db.is_file():
+            return jsonify({"findings": [], "counts": {}})
+        con = sqlite3.connect(db); con.row_factory = sqlite3.Row
+        try:
+            rows = con.execute(
+                "SELECT f.title,f.severity,f.cwe_id,f.owasp_category,f.tool_source,a.url "
+                "FROM findings f LEFT JOIN assets a ON a.id=f.asset_id "
+                "ORDER BY CASE f.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 "
+                "WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END"
+            ).fetchall()
+            order = ["critical", "high", "medium", "low", "info"]
+            counts = {s: 0 for s in order}
+            out = []
+            for r in rows:
+                sev = r["severity"] or "info"
+                counts[sev] = counts.get(sev, 0) + 1
+                out.append({"title": r["title"], "severity": sev, "cwe": r["cwe_id"] or "",
+                            "category": r["owasp_category"] or "", "source": r["tool_source"] or "",
+                            "url": r["url"] or ""})
+            assets = con.execute("SELECT count(*) FROM assets").fetchone()[0]
+            secrets = con.execute("SELECT count(*) FROM secret_matches").fetchone()[0]
+        finally:
+            con.close()
+        return jsonify({"findings": out, "counts": counts, "assets": assets, "secrets": secrets})
+
     def _serve_disk_report(run_id):
         safe = "".join(c for c in run_id if c.isalnum() or c in "-_")
         reps = sorted((DATA_DIR / safe / "reports").glob("*.html")) if (DATA_DIR / safe / "reports").is_dir() else []

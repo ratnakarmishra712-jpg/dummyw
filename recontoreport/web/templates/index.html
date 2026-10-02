@@ -5,144 +5,193 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ReconToReport</title>
 <style>
-  :root{--bg:#0a0a0a;--panel:#111;--fg:#f4f4f4;--mut:#8a8a8a;--bd:#2a2a2a;
-    --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;}
+  :root{--bg:#0a0a0c;--panel:#111114;--panel2:#161619;--fg:#f0f0f2;--mut:#7f7f88;--bd:#232327;
+    --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;--purple:#b14cff;
+    --critical:#b14cff;--high:#ff4d4d;--medium:#f2a100;--low:#f2c200;--info:#5b8cff;--sidebar:#0d0d10}
   *{box-sizing:border-box}
-  body{font-family:"Helvetica Neue",Arial,sans-serif;color:var(--fg);margin:0;background:var(--bg);
-    background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:4px 4px}
-  .wrap{max-width:860px;margin:0 auto;padding:28px 16px 70px}
-  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
-  .logo{font-size:1.8rem;font-weight:900;letter-spacing:-.04em}.logo b{color:var(--green)}
-  h1{font-size:1.05rem;font-weight:800;text-transform:uppercase;margin:6px 0 2px}
-  .sub{color:var(--mut);margin:0 0 20px;font-size:.74rem}
-  .card{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:20px;margin-bottom:16px}
-  label{display:block;font-weight:700;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin:14px 0 5px}
-  input[type=text],input[type=password],textarea,select{width:100%;padding:9px 11px;background:#000;color:var(--fg);
-    border:1px solid var(--bd);border-radius:7px;font-size:.9rem;font-family:inherit}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"Helvetica Neue",Arial,sans-serif;font-size:14px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .app{display:flex;min-height:100vh}
+  /* sidebar */
+  .side{width:208px;background:var(--sidebar);border-right:1px solid var(--bd);padding:20px 12px;position:sticky;top:0;height:100vh;flex-shrink:0}
+  .logo{font-size:1.15rem;font-weight:900;letter-spacing:-.03em;padding:4px 10px 18px}.logo b{color:var(--green)}
+  .nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:var(--mut);
+    text-decoration:none;font-weight:600;font-size:.86rem;cursor:pointer;margin-bottom:2px}
+  .nav a:hover{background:var(--panel)}
+  .nav a.active{background:var(--panel2);color:var(--fg);box-shadow:inset 3px 0 0 var(--green)}
+  .nav .ic{width:16px;text-align:center}
+  /* main */
+  .main{flex:1;min-width:0}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:20px 28px;border-bottom:1px solid var(--bd)}
+  .top h1{font-size:1.25rem;font-weight:800;margin:0}.top .sub{color:var(--mut);font-size:.76rem;margin-top:2px}
+  .content{padding:24px 28px 60px}
+  /* cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+  .card{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:18px}
+  .card h3{margin:0 0 14px;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)}
+  .stat{display:flex;flex-direction:column;gap:6px}
+  .stat .n{font-size:2.2rem;font-weight:800;line-height:1}
+  .stat .l{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+  .st-ok{background:rgba(56,224,122,.15);color:var(--green)}
+  /* severity bars */
+  .bars{display:flex;align-items:flex-end;gap:14px;height:120px;padding-top:8px}
+  .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}
+  .bar .col{width:100%;border-radius:6px 6px 0 0;margin-top:auto;min-height:3px;transition:height .4s}
+  .bar .v{font-size:.9rem;font-weight:800}.bar .lab{font-size:.6rem;color:var(--mut);text-transform:uppercase}
+  .c-critical{background:var(--critical)}.c-high{background:var(--high)}.c-medium{background:var(--medium)}.c-low{background:var(--low)}.c-info{background:var(--info)}
+  /* table */
+  table.dt{width:100%;border-collapse:collapse;font-size:.85rem}
+  table.dt th{text-align:left;color:var(--mut);font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;padding:10px 12px;border-bottom:1px solid var(--bd)}
+  table.dt td{padding:12px;border-bottom:1px solid var(--bd);vertical-align:top}
+  table.dt tr:hover td{background:var(--panel2)}
+  .sid{font-family:ui-monospace,monospace;font-size:.72rem;color:var(--mut);background:var(--panel2);border:1px solid var(--bd);border-radius:6px;padding:3px 8px}
+  .badge{display:inline-block;padding:3px 10px;border-radius:5px;font-size:.66rem;font-weight:800;text-transform:uppercase;color:#000}
+  .b-critical{background:var(--critical);color:#fff}.b-high{background:var(--high);color:#fff}.b-medium{background:var(--medium)}.b-low{background:var(--low)}.b-info{background:var(--info);color:#fff}
+  /* form */
+  label{display:block;font-weight:700;font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;color:var(--green);margin:14px 0 5px}
+  input[type=text],input[type=password],textarea,select{width:100%;padding:10px 12px;background:#000;color:var(--fg);border:1px solid var(--bd);border-radius:8px;font-size:.9rem;font-family:inherit}
   input:focus,textarea:focus{outline:none;border-color:var(--green)}
-  textarea{min-height:52px;resize:vertical} .hint{color:var(--mut);font-size:.74rem;margin-top:4px}
+  textarea{min-height:50px;resize:vertical}.hint{color:var(--mut);font-size:.74rem;margin-top:4px}
   code{color:var(--yellow);font-size:.74rem}
-  .row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:150px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}.row>div{flex:1;min-width:150px}
   .phases{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px}
-  .phases label{display:flex;align-items:center;gap:7px;font-weight:400;color:var(--fg);text-transform:none;letter-spacing:0;margin:0;font-size:.85rem}
-  accent-color:var(--green);
+  .phases label{display:flex;align-items:center;gap:7px;font-weight:400;color:var(--fg);text-transform:none;letter-spacing:0;margin:0;font-size:.86rem}
   input[type=checkbox]{accent-color:var(--green);width:16px;height:16px}
-  details{margin-top:10px}summary{cursor:pointer;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
-  button{background:var(--green);color:#000;border:0;border-radius:999px;padding:12px 26px;font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-  button.sec{background:transparent;color:var(--fg);border:1px solid var(--bd);padding:7px 14px}
+  details{margin-top:10px}summary{cursor:pointer;font-weight:700;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--blue)}
+  button{background:var(--green);color:#000;border:0;border-radius:999px;padding:12px 26px;font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+  button.sec{background:transparent;color:var(--fg);border:1px solid var(--bd);padding:8px 14px}
   button:disabled{opacity:.4;cursor:default}
-  .authz{border:1px dashed var(--yellow);color:#f0e4b8;padding:11px 13px;border-radius:8px;font-size:.8rem;margin-top:14px}
+  .authz{border:1px dashed var(--yellow);color:#f0e4b8;padding:11px 13px;border-radius:9px;font-size:.8rem;margin-top:14px}
   .authz label{display:flex;gap:9px;align-items:flex-start;font-weight:400;color:#f0e4b8;text-transform:none;letter-spacing:0;margin:0}
-  table{border-collapse:collapse;width:100%;font-size:.82rem;margin-top:10px}
-  th,td{border:1px solid var(--bd);padding:7px 9px;text-align:left}
-  th{background:#000;color:var(--mut);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase}
-  .OK{color:var(--green);font-weight:700}.FAILED{color:var(--red);font-weight:700}.SKIPPED{color:var(--mut)}
-  pre{background:#000;color:#38e07a;border:1px solid var(--bd);border-radius:8px;padding:11px;font-size:.76rem;max-height:260px;overflow:auto;white-space:pre-wrap}
-  .role{border:1px dashed var(--bd);border-radius:8px;padding:12px;margin-top:10px;position:relative}
-  .role .rm{position:absolute;top:8px;right:8px}
+  pre{background:#000;color:#38e07a;border:1px solid var(--bd);border-radius:9px;padding:11px;font-size:.76rem;max-height:240px;overflow:auto;white-space:pre-wrap}
+  .role{border:1px dashed var(--bd);border-radius:9px;padding:12px;margin-top:10px;position:relative}.role .rm{position:absolute;top:8px;right:8px}
   .err{color:var(--red);font-size:.82rem;margin-left:8px}
-  a.report{display:inline-block;margin-top:14px;background:var(--yellow);color:#000;padding:11px 22px;border-radius:999px;text-decoration:none;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem}
-  h3{text-transform:uppercase;font-weight:800;letter-spacing:.04em}
+  a.report{display:inline-block;background:var(--yellow);color:#000;padding:10px 20px;border-radius:999px;text-decoration:none;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem}
+  .hide{display:none}
+  .empty{color:var(--mut);font-style:italic;padding:16px 12px}
+  @media(max-width:720px){.side{display:none}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="logo">RECON<b>//</b>REPORT</div>
-  <h1>Attack-surface intel console</h1>
-  <p class="sub mono">authorized security testing only · set a target, pick phases, run</p>
+<div class="app">
+  <aside class="side">
+    <div class="logo">RECON<b>//</b>REPORT</div>
+    <nav class="nav">
+      <a data-view="dash" class="active"><span class="ic">◧</span> Dashboard</a>
+      <a data-view="scan"><span class="ic">▸</span> New scan</a>
+      <a data-view="reports"><span class="ic">▤</span> Reports</a>
+    </nav>
+  </aside>
 
-  <div class="card" id="formCard">
-    <label>Target URL</label>
-    <input type="text" id="url" placeholder="https://your-authorized-target.com">
-    <div class="hint">You can omit http:// — it's added automatically.
-      &nbsp;<a href="#" onclick="startDemo();return false" style="color:var(--yellow)">▸ Start demo target</a>
-      (zero-install local vulnerable app, auto-fills the URL)</div>
-
-    <label>Phases</label>
-    <div class="phases">
-      <label><input type="checkbox" class="ph" value="1" checked> 1 · Recon</label>
-      <label><input type="checkbox" class="ph" value="2" checked> 2 · Traffic/Auth</label>
-      <label><input type="checkbox" class="ph" value="3" checked> 3 · Scan</label>
-      <label><input type="checkbox" class="ph" value="4" checked> 4 · Exploit</label>
-      <label><input type="checkbox" class="ph" value="5" checked> 5 · Harvest</label>
+  <div class="main">
+    <div class="top">
+      <div><h1 id="topTitle">Dashboard</h1><div class="sub mono" id="topSub">no scan yet</div></div>
+      <div><span class="pill st-ok" id="topStatus">idle</span></div>
     </div>
-    <div class="hint">Dependencies run automatically (picking 4 also runs 1 and 3).</div>
+    <div class="content">
 
-    <details>
-      <summary>Discovery options</summary>
-      <label>Wordlist file path (optional)</label>
-      <input type="text" id="wordlist" placeholder="/Users/you/SecLists/Discovery/Web-Content/common.txt">
-      <div class="hint">Leave blank to skip brute-forcing. Get one: <code>git clone --depth 1 https://github.com/danielmiessler/SecLists.git ~/SecLists</code></div>
-      <div class="row">
-        <div><label>nuclei tags</label><input type="text" id="nuclei_tags" placeholder="misconfiguration,exposure,cve"></div>
-        <div><label>nuclei max URLs</label><input type="text" id="nuclei_max_urls" value="100"></div>
-      </div>
-      <label>Scope — include hosts (one/line)</label><textarea id="scope_include" placeholder="auto-filled from target"></textarea>
-      <label>Scope — exclude hosts (one/line)</label><textarea id="scope_exclude"></textarea>
-    </details>
+      <!-- DASHBOARD -->
+      <section id="view-dash">
+        <div class="grid">
+          <div class="card stat"><div class="n" id="kFind" style="color:var(--red)">0</div><div class="l">Vulnerabilities found</div></div>
+          <div class="card stat"><div class="n" id="kAssets" style="color:var(--green)">0</div><div class="l">Assets discovered</div></div>
+          <div class="card stat"><div class="n" id="kSecrets" style="color:var(--yellow)">0</div><div class="l">Secret matches</div></div>
+          <div class="card stat"><div class="n" id="kCrit" style="color:var(--critical)">0</div><div class="l">Critical + High</div></div>
+        </div>
+        <div class="grid" style="grid-template-columns:1.2fr 2fr">
+          <div class="card"><h3>Severity breakdown</h3><div class="bars" id="bars"></div></div>
+          <div class="card"><h3>Run status</h3><div id="ptable"><div class="empty">Run a scan to see phase results.</div></div>
+            <a id="reportLink" class="report hide" target="_blank" style="margin-top:14px">Open full report ↗</a></div>
+        </div>
+        <div class="card" style="margin-top:4px">
+          <h3>Findings</h3>
+          <div id="findings"><div class="empty">No findings yet.</div></div>
+        </div>
+      </section>
 
-    <details>
-      <summary>Login / auth roles</summary>
-      <div class="hint">Add a role so the tool logs in and reaches pages behind a login.</div>
-      <div id="roles"></div>
-      <button class="sec" type="button" onclick="addRole()">+ Add login role</button>
-    </details>
+      <!-- NEW SCAN -->
+      <section id="view-scan" class="hide">
+        <div class="card" style="max-width:720px">
+          <label>Target URL</label>
+          <input type="text" id="url" placeholder="https://your-authorized-target.com">
+          <div class="hint">Omit http:// if you like. &nbsp;<a href="#" onclick="startDemo();return false" style="color:var(--yellow)">▸ Start demo target</a> (local, zero-install)</div>
+          <label>Phases</label>
+          <div class="phases">
+            <label><input type="checkbox" class="ph" value="1" checked> 1 · Recon</label>
+            <label><input type="checkbox" class="ph" value="2" checked> 2 · Traffic/Auth</label>
+            <label><input type="checkbox" class="ph" value="3" checked> 3 · Scan</label>
+            <label><input type="checkbox" class="ph" value="4" checked> 4 · Exploit</label>
+            <label><input type="checkbox" class="ph" value="5" checked> 5 · Harvest</label>
+          </div>
+          <div class="hint">Dependencies run automatically.</div>
+          <details><summary>Discovery options</summary>
+            <label>Wordlist path (optional)</label><input type="text" id="wordlist" placeholder="~/SecLists/Discovery/Web-Content/common.txt">
+            <div class="row"><div><label>nuclei tags</label><input type="text" id="nuclei_tags" placeholder="xss,misconfiguration,exposure"></div>
+            <div><label>nuclei max URLs</label><input type="text" id="nuclei_max_urls" value="25"></div></div>
+            <label>Scope include (one/line)</label><textarea id="scope_include"></textarea>
+            <label>Scope exclude (one/line)</label><textarea id="scope_exclude"></textarea>
+          </details>
+          <details><summary>Login / auth roles</summary>
+            <div class="hint">Add a role to scan pages behind a login.</div>
+            <div id="roles"></div><button class="sec" type="button" onclick="addRole()">+ Add login role</button>
+          </details>
+          <div class="authz"><label><input type="checkbox" id="authorized">
+            <span>I have explicit written authorization to test this target.</span></label></div>
+          <div style="margin-top:18px"><button id="go" onclick="startScan()">▸ Run scan</button><span id="formErr" class="err"></span></div>
+        </div>
+        <div class="card" style="max-width:720px;margin-top:16px"><h3>Live log</h3><pre id="plog">—</pre></div>
+      </section>
 
-    <div class="authz">
-      <label><input type="checkbox" id="authorized">
-        <span>I have explicit written authorization to test this target. (Required for active phases 1–4.)</span></label>
+      <!-- REPORTS -->
+      <section id="view-reports" class="hide">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Past reports</h3><button class="sec" onclick="loadHistory()">refresh</button></div>
+          <div id="history" style="margin-top:12px"></div>
+        </div>
+      </section>
+
     </div>
-
-    <div style="margin-top:18px"><button id="go" onclick="startScan()">▸ Run scan</button><span id="formErr" class="err"></span></div>
-  </div>
-
-  <div class="card" id="progress" style="display:none">
-    <h3 id="pstatus" style="margin:0 0 8px">Running…</h3>
-    <div id="ptable"></div>
-    <a id="reportLink" class="report" style="display:none" target="_blank">Open report ↗</a>
-    <h4 class="mono" style="margin:16px 0 6px;font-size:.68rem;color:var(--mut)">// live log</h4>
-    <pre id="plog"></pre>
-  </div>
-
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h3 style="margin:0">Past reports</h3>
-      <button class="sec" type="button" onclick="loadHistory()">refresh</button>
-    </div>
-    <div id="history" class="hint" style="margin-top:10px">Loading…</div>
   </div>
 </div>
 
 <script>
+const SEV=["critical","high","medium","low","info"];
+function show(v){
+  for(const s of ['dash','scan','reports']) document.getElementById('view-'+s).classList.toggle('hide',s!==v);
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
+  document.getElementById('topTitle').textContent={dash:'Dashboard',scan:'New scan',reports:'Reports'}[v];
+}
+document.querySelectorAll('.nav a').forEach(a=>a.onclick=()=>show(a.dataset.view));
+
 function addRole(){
-  const d=document.createElement('div'); d.className='role';
+  const d=document.createElement('div');d.className='role';
   d.innerHTML=`<button class="sec rm" type="button" onclick="this.parentNode.remove()">remove</button>
     <div class="row"><div><label>Role name</label><input type="text" class="r_name" value="user"></div>
     <div><label>Privilege level</label><input type="text" class="r_priv" value="1"></div></div>
     <label>Login page URL</label><input type="text" class="r_login" placeholder="https://site/login">
     <div class="row"><div><label>Username</label><input type="text" class="r_user"></div>
     <div><label>Password</label><input type="password" class="r_pass"></div></div>
-    <div class="row"><div><label>Username field selector</label><input type="text" class="r_us" value="input[name=username]"></div>
-    <div><label>Password field selector</label><input type="text" class="r_ps" value="input[name=password]"></div></div>
-    <label>Submit button selector</label><input type="text" class="r_sub" value="button[type=submit]">`;
+    <div class="row"><div><label>Username selector</label><input type="text" class="r_us" value="input[name=username]"></div>
+    <div><label>Password selector</label><input type="text" class="r_ps" value="input[name=password]"></div></div>
+    <label>Submit selector</label><input type="text" class="r_sub" value="button[type=submit]">`;
   document.getElementById('roles').appendChild(d);
 }
-function roles(){
-  return [...document.querySelectorAll('.role')].map(r=>({
-    name:r.querySelector('.r_name').value, privilege_level:r.querySelector('.r_priv').value,
-    login_url:r.querySelector('.r_login').value, username:r.querySelector('.r_user').value,
-    password:r.querySelector('.r_pass').value, username_selector:r.querySelector('.r_us').value,
-    password_selector:r.querySelector('.r_ps').value, submit_selector:r.querySelector('.r_sub').value,
-  }));
-}
+function roles(){return [...document.querySelectorAll('.role')].map(r=>({
+  name:r.querySelector('.r_name').value,privilege_level:r.querySelector('.r_priv').value,
+  login_url:r.querySelector('.r_login').value,username:r.querySelector('.r_user').value,
+  password:r.querySelector('.r_pass').value,username_selector:r.querySelector('.r_us').value,
+  password_selector:r.querySelector('.r_ps').value,submit_selector:r.querySelector('.r_sub').value}));}
+
 async function startDemo(){
-  const r=await fetch('/demo',{method:'POST'}); const {url}=await r.json();
-  document.getElementById('url').value=url;
-  document.getElementById('authorized').checked=true;
-  document.getElementById('formErr').textContent='Demo target running — click Run scan.';
+  const {url}=await (await fetch('/demo',{method:'POST'})).json();
+  document.getElementById('url').value=url;document.getElementById('authorized').checked=true;
+  document.getElementById('formErr').textContent='Demo target ready — click Run scan.';
 }
+let CURRENT=null;
 async function startScan(){
-  const err=document.getElementById('formErr'); err.textContent='';
+  const err=document.getElementById('formErr');err.textContent='';
   const url=document.getElementById('url').value.trim();
   if(!url){err.textContent='Enter a target URL.';return;}
   const phases=[...document.querySelectorAll('.ph:checked')].map(c=>c.value);
@@ -152,49 +201,59 @@ async function startScan(){
     nuclei_tags:document.getElementById('nuclei_tags').value.trim(),
     nuclei_max_urls:document.getElementById('nuclei_max_urls').value.trim(),
     scope_include:document.getElementById('scope_include').value,
-    scope_exclude:document.getElementById('scope_exclude').value,
-    auth_roles:roles()};
-  // reset previous run's output before starting a new one
-  document.getElementById('plog').textContent='';
-  document.getElementById('ptable').innerHTML='';
-  const rl=document.getElementById('reportLink'); rl.style.display='none'; rl.removeAttribute('href');
-  const st0=document.getElementById('pstatus'); st0.textContent='Running…'; st0.className='';
+    scope_exclude:document.getElementById('scope_exclude').value,auth_roles:roles()};
   document.getElementById('go').disabled=true;
-  const r=await fetch('/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const {run_id}=await r.json();
-  document.getElementById('progress').style.display='block';
-  poll(run_id);
+  document.getElementById('plog').textContent='';document.getElementById('ptable').innerHTML='';
+  document.getElementById('findings').innerHTML='';document.getElementById('reportLink').classList.add('hide');
+  document.getElementById('topSub').textContent=url;document.getElementById('topStatus').textContent='running';
+  const {run_id}=await (await fetch('/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();
+  CURRENT=run_id;show('dash');poll(run_id);
 }
-async function loadHistory(){
-  const h=document.getElementById('history');
-  try{
-    const rows=await (await fetch('/runs')).json();
-    if(!rows.length){h.textContent='No past reports yet.';return;}
-    h.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:.82rem">'+
-      rows.map(r=>`<tr style="border-bottom:1px solid var(--bd)">
-        <td style="padding:6px 4px;color:var(--mut)">${r.when}</td>
-        <td style="padding:6px 4px">${r.target||r.id}</td>
-        <td style="padding:6px 4px;text-align:right"><a href="/report/${r.id}" target="_blank" style="color:var(--yellow)">open ↗</a></td></tr>`).join('')+
-      '</table>';
-  }catch(e){h.textContent='Could not load history.';}
+function renderBars(counts){
+  const max=Math.max(1,...SEV.map(s=>counts[s]||0));
+  document.getElementById('bars').innerHTML=SEV.map(s=>{
+    const v=counts[s]||0;return `<div class="bar"><div class="v">${v}</div>
+      <div class="col c-${s}" style="height:${(v/max)*100}%"></div><div class="lab">${s}</div></div>`;}).join('');
+}
+async function loadFindings(id){
+  const d=await (await fetch('/findings/'+id)).json();
+  document.getElementById('kFind').textContent=d.findings.length;
+  document.getElementById('kAssets').textContent=d.assets||0;
+  document.getElementById('kSecrets').textContent=d.secrets||0;
+  document.getElementById('kCrit').textContent=(d.counts.critical||0)+(d.counts.high||0);
+  renderBars(d.counts);
+  const el=document.getElementById('findings');
+  if(!d.findings.length){el.innerHTML='<div class="empty">No findings in this scan.</div>';return;}
+  el.innerHTML='<table class="dt"><thead><tr><th>Finding</th><th>Category</th><th>Affected URL</th><th>Severity</th><th>CWE</th></tr></thead><tbody>'+
+    d.findings.map(f=>`<tr><td>${f.title}</td><td>${f.category||f.source}</td>
+      <td class="mono" style="color:var(--mut);font-size:.76rem">${f.url||'—'}</td>
+      <td><span class="badge b-${f.severity}">${f.severity}</span></td><td>${f.cwe||'—'}</td></tr>`).join('')+
+    '</tbody></table>';
 }
 async function poll(id){
-  const r=await fetch('/status/'+id); const s=await r.json();
+  const s=await (await fetch('/status/'+id)).json();
   document.getElementById('plog').textContent=(s.log||[]).join('\n');
   document.getElementById('plog').scrollTop=1e9;
   if(s.phases&&s.phases.length){
-    let h='<table><tr><th>Phase</th><th>Result</th><th>Assets</th><th>Findings</th></tr>';
-    for(const p of s.phases){h+=`<tr><td>${p.number} ${p.name}</td><td class="${p.result}">${p.result}</td><td>${p.assets}</td><td>${p.findings}</td></tr>`;}
-    h+='</table>'; document.getElementById('ptable').innerHTML=h;
+    document.getElementById('ptable').innerHTML='<table class="dt"><thead><tr><th>Phase</th><th>Result</th><th>Assets</th><th>Findings</th></tr></thead><tbody>'+
+      s.phases.map(p=>`<tr><td>${p.number} ${p.name}</td><td><span class="pill ${p.result==='OK'?'st-ok':''}" style="${p.result!=='OK'?'color:var(--mut)':''}">${p.result}</span></td><td>${p.assets}</td><td>${p.findings}</td></tr>`).join('')+'</tbody></table>';
   }
-  const st=document.getElementById('pstatus');
-  if(s.status==='running'){st.textContent='Running…'; setTimeout(()=>poll(id),1500);}
-  else if(s.status==='done'){st.textContent='Done ✓'; document.getElementById('go').disabled=false;
-    if(s.has_report){const a=document.getElementById('reportLink');a.href='/report/'+id;a.style.display='inline-block';}}
-  else {st.textContent='Error'; st.className='FAILED'; document.getElementById('go').disabled=false;}
-  if(s.status!=='running') loadHistory();
+  const ts=document.getElementById('topStatus');
+  if(s.status==='running'){ts.textContent='running';setTimeout(()=>poll(id),1500);}
+  else{ts.textContent=s.status==='done'?'done':'error';document.getElementById('go').disabled=false;
+    loadFindings(id);loadHistory();
+    if(s.has_report){const a=document.getElementById('reportLink');a.href='/report/'+id;a.classList.remove('hide');}}
 }
-loadHistory();
+async function loadHistory(){
+  const h=document.getElementById('history');
+  try{const rows=await (await fetch('/runs')).json();
+    if(!rows.length){h.innerHTML='<div class="empty">No past reports yet.</div>';return;}
+    h.innerHTML='<table class="dt"><thead><tr><th>Date</th><th>Target</th><th></th></tr></thead><tbody>'+
+      rows.map(r=>`<tr><td class="mono" style="color:var(--mut)">${r.when}</td><td>${r.target||r.id}</td>
+        <td style="text-align:right"><a href="/report/${r.id}" target="_blank" style="color:var(--yellow)">open ↗</a></td></tr>`).join('')+'</tbody></table>';
+  }catch(e){h.innerHTML='<div class="empty">Could not load history.</div>';}
+}
+loadHistory();renderBars({});
 </script>
 </body>
 </html>

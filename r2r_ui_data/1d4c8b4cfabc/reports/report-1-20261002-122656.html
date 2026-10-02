@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Assessment Report — http://127.0.0.1:8911/</title>
+<style>
+  :root{
+    --bg:#0b0b0d; --panel:#131316; --fg:#ececec; --mut:#8c8c93; --bd:#262629;
+    --accent:#5b8cff; --green:#38e07a;
+    --critical:#b14cff; --high:#ff4d4d; --medium:#f2a100; --low:#f2c200; --info:#5b8cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"Helvetica Neue",Arial,sans-serif;line-height:1.6;font-size:15px}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 90px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  /* cover */
+  .cover{padding:64px 0 40px;border-bottom:1px solid var(--bd);margin-bottom:28px}
+  .brand{font-size:1.4rem;font-weight:900;letter-spacing:-.03em}.brand b{color:var(--green)}
+  .cover h1{font-size:2.1rem;font-weight:800;margin:26px 0 6px;letter-spacing:-.02em}
+  .cover .meta{color:var(--mut);font-size:.85rem;margin-top:14px}
+  .cover .meta span{color:var(--fg)}
+  /* summary */
+  h2{font-size:1.15rem;font-weight:800;margin:36px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--bd)}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+  .kpi{flex:1;min-width:110px;background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:14px}
+  .kpi .n{font-size:1.8rem;font-weight:800;line-height:1}.kpi .l{font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-top:6px}
+  .kpi.critical .n{color:var(--critical)}.kpi.high .n{color:var(--high)}.kpi.medium .n{color:var(--medium)}.kpi.low .n{color:var(--low)}.kpi.info .n{color:var(--info)}
+  table.toc{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+  table.toc td,table.toc th{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left}
+  table.toc th{color:var(--mut);font-size:.68rem;text-transform:uppercase;letter-spacing:.08em}
+  .badge{display:inline-block;padding:2px 9px;border-radius:4px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#000}
+  .b-critical{background:var(--critical);color:#fff}.b-high{background:var(--high);color:#fff}.b-medium{background:var(--medium)}.b-low{background:var(--low)}.b-info{background:var(--info);color:#fff}
+  /* finding */
+  .finding{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:22px 24px;margin:20px 0}
+  .finding .fid{color:var(--mut);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+  .finding h3{font-size:1.25rem;font-weight:800;margin:4px 0 14px}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font-size:.9rem;margin-bottom:16px}
+  .kv .k{color:var(--mut);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+  .sec{margin:14px 0}.sec h4{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 5px}
+  pre{background:#000;border:1px solid var(--bd);border-radius:6px;padding:11px;overflow-x:auto;font-size:.82rem;white-space:pre-wrap;color:#c9d1d9;margin:0}
+  a{color:var(--accent);word-break:break-all}
+  .assets{width:100%;border-collapse:collapse;font-size:.8rem}
+  .assets td,.assets th{border:1px solid var(--bd);padding:6px 8px;text-align:left}
+  .assets th{background:#000;color:var(--mut);font-size:.66rem;text-transform:uppercase}
+  .empty{color:var(--mut);font-style:italic}
+  footer{margin-top:50px;color:var(--mut);font-size:.72rem;border-top:1px solid var(--bd);padding-top:16px}
+  @media print{body{background:#fff;color:#111}.finding,.kpi{background:#fff}}
+</style>
+</head>
+<body>
+
+
+
+<div class="wrap">
+  <div class="cover">
+    <div class="brand">RECON<b>//</b>REPORT</div>
+    <h1>Web Application<br>Security Assessment</h1>
+    <div class="meta">
+      Target: <span>http://127.0.0.1:8911/</span><br>
+      
+      Date: <span>2026-10-02 12:26 UTC</span><br>
+      Classification: <span>Confidential</span>
+    </div>
+  </div>
+
+  <h2>Executive Summary</h2>
+  <p>This assessment was conducted under explicit written authorization and limited to the agreed scope.
+     2 finding(s) were identified across 4 discovered asset(s). The table
+     below summarizes severity distribution; each finding is detailed in the following section with impact and
+     remediation guidance.</p>
+  <div class="kpis">
+    
+    <div class="kpi critical"><div class="n">1</div><div class="l">critical</div></div>
+    
+    <div class="kpi high"><div class="n">0</div><div class="l">high</div></div>
+    
+    <div class="kpi medium"><div class="n">0</div><div class="l">medium</div></div>
+    
+    <div class="kpi low"><div class="n">1</div><div class="l">low</div></div>
+    
+    <div class="kpi info"><div class="n">0</div><div class="l">info</div></div>
+    
+  </div>
+
+  
+  <h2>Findings Overview</h2>
+  <table class="toc">
+    <thead><tr><th>#</th><th>Finding</th><th>Severity</th><th>CWE</th></tr></thead>
+    <tbody>
+    
+    
+      <tr><td>01</td><td>JWT accepts 'alg: none' (unsigned)</td>
+      <td><span class="badge b-critical">critical</span></td><td>CWE-347</td></tr>
+    
+      <tr><td>02</td><td>JWT has no expiry (exp) claim</td>
+      <td><span class="badge b-low">low</span></td><td>CWE-613</td></tr>
+    
+    </tbody>
+  </table>
+  
+
+  <h2>Detailed Findings</h2>
+  
+  
+  
+  <div class="finding">
+    <div class="fid">Finding 01 · jwt_analysis</div>
+    <h3>JWT accepts 'alg: none' (unsigned)</h3>
+    <div class="kv">
+      <div class="k">Affected URL</div><div>http://127.0.0.1:8911/</div>
+      <div class="k">Severity</div><div><span class="badge b-critical">critical</span></div>
+      <div class="k">CVSS</div><div>9.1 (Critical) <span class="mono" style="color:var(--mut);font-size:.78rem">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</span></div>
+      <div class="k">CWE / OWASP</div><div>CWE-347 · A02:2021 Cryptographic Failures</div>
+      <div class="k">Confidence</div><div>firm</div>
+    </div>
+    <div class="sec"><h4>Description</h4><div>The token header declares alg=none, meaning it carries no signature.</div></div>
+    <div class="sec"><h4>Business Impact</h4><div>Exploitation could lead to full compromise of the application or its data, resulting in major financial, legal and reputational damage.</div></div>
+    <div class="sec"><h4>Proof of Concept</h4><pre>Token (truncated): eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4i...</pre></div>
+    <div class="sec"><h4>Suggested Remediation</h4><div>Use strong, rotated signing keys; pin the expected algorithm server-side; set short exp and reject alg=none.</div></div>
+  </div>
+  
+  <div class="finding">
+    <div class="fid">Finding 02 · jwt_analysis</div>
+    <h3>JWT has no expiry (exp) claim</h3>
+    <div class="kv">
+      <div class="k">Affected URL</div><div>http://127.0.0.1:8911/</div>
+      <div class="k">Severity</div><div><span class="badge b-low">low</span></div>
+      <div class="k">CVSS</div><div>3.1 (Low) <span class="mono" style="color:var(--mut);font-size:.78rem">CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:L/I:N/A:N</span></div>
+      <div class="k">CWE / OWASP</div><div>CWE-613 · A02:2021 Cryptographic Failures</div>
+      <div class="k">Confidence</div><div>firm</div>
+    </div>
+    <div class="sec"><h4>Description</h4><div>Tokens without an exp claim remain valid indefinitely if leaked.</div></div>
+    <div class="sec"><h4>Business Impact</h4><div>Limited direct impact, but contributes to overall attack surface and may aid an attacker during reconnaissance.</div></div>
+    <div class="sec"><h4>Proof of Concept</h4><pre>Token (truncated): eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4i...</pre></div>
+    <div class="sec"><h4>Suggested Remediation</h4><div>Use strong, rotated signing keys; pin the expected algorithm server-side; set short exp and reject alg=none.</div></div>
+  </div>
+  
+
+  <h2>Appendix — Discovered Assets</h2>
+  
+  <table class="assets">
+    <thead><tr><th>Type</th><th>URL</th><th>Method</th><th>Source</th></tr></thead>
+    <tbody><tr><td>endpoint</td><td>http://127.0.0.1:8911/</td><td>GET</td><td>crawler</td></tr><tr><td>api_route</td><td>http://127.0.0.1:8911/product.php?id=1</td><td>GET</td><td>crawler</td></tr><tr><td>endpoint</td><td>http://127.0.0.1:8911/.git/config</td><td>GET</td><td>crawler</td></tr><tr><td>api_route</td><td>http://127.0.0.1:8911/search.php?q=x</td><td>GET</td><td>crawler</td></tr></tbody>
+  </table>
+  
+
+  
+  <h2>Appendix — Secret Matches (unverified)</h2>
+  <table class="assets">
+    <thead><tr><th>Kind</th><th>Value</th></tr></thead>
+    <tbody><tr><td>email</td><td class="mono">admin@demo.local</td></tr><tr><td>aws_access_key</td><td class="mono">AKIAIOSFODNN7EXAMPLE</td></tr><tr><td>jwt</td><td class="mono">eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.</td></tr></tbody>
+  </table>
+  
+
+  <footer>ReconToReport · Confidential · For authorized security testing only. Generated 2026-10-02 12:26 UTC.</footer>
+</div>
+</body>
+</html>
