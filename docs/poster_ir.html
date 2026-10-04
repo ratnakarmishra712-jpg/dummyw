@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secure IR Link — Research Poster</title>
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#121216; --panel2:#17171c; --fg:#f1f1f3; --mut:#8a8a93; --bd:#262630;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff; --purple:#b14cff; --ir:#c56bff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .poster{width:1485px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px;
+    padding:40px 44px 32px;position:relative;overflow:hidden}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--blue);padding-bottom:18px}
+  .brand{font-size:1rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--blue)}
+  h1{font-size:3rem;line-height:1;font-weight:900;letter-spacing:-.03em;margin:10px 0 6px}
+  h1 em{color:var(--blue);font-style:normal}
+  .tag{font-size:1.05rem;color:var(--mut);max-width:900px;line-height:1.4}
+  .byline{text-align:right;font-size:.7rem;color:var(--mut);line-height:1.8;letter-spacing:.04em}
+  .byline .k{color:var(--blue)}
+  .cols{display:grid;grid-template-columns:1.1fr 1.5fr 1fr;gap:18px;margin-top:22px;align-items:start}
+  .stackcol{display:flex;flex-direction:column;gap:18px}
+  .box{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:18px 20px}
+  h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--blue);margin:0 0 11px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:15px;height:2px;background:var(--blue)}
+  p{margin:0 0 9px;line-height:1.5;font-size:.9rem;color:#dcdce0}
+  .lead{font-size:.98rem;color:#eaeaee}
+  ul{margin:0;padding-left:17px}li{line-height:1.45;margin-bottom:6px;font-size:.86rem;color:#dcdce0}
+  li b{color:#fff}
+  .chip{font-size:.66rem;border:1px solid var(--bd);border-radius:999px;padding:3px 10px;color:#cfcfd6;background:var(--panel2)}
+  .stackchips{display:flex;flex-wrap:wrap;gap:6px}
+  /* hardware link diagram */
+  .link{display:flex;align-items:center;gap:0;margin:2px 0}
+  .dev{flex:1;background:var(--panel2);border:1px solid var(--bd);border-radius:10px;padding:12px;text-align:center}
+  .dev .h{font-weight:800;font-size:.9rem}.dev .s{font-size:.64rem;color:var(--mut);margin-top:3px;line-height:1.4}
+  .dev.tx{box-shadow:inset 0 3px 0 var(--green)}.dev.rx{box-shadow:inset 0 3px 0 var(--yellow)}
+  .beam{flex:1.2;text-align:center;color:var(--ir);font-weight:800;font-size:.8rem;position:relative;padding:0 6px}
+  .beam .w{font-size:1.3rem;letter-spacing:-1px;color:var(--ir)}
+  .beam .lbl{font-size:.58rem;color:var(--mut);letter-spacing:.1em}
+  .chain{font-size:.66rem;color:var(--mut);margin-top:8px;text-align:center;line-height:1.6}
+  .chain b{color:#fff}
+  /* crypto handshake */
+  .hs{display:flex;flex-direction:column;gap:7px}
+  .step{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border:1px solid var(--bd);border-radius:8px;padding:8px 11px}
+  .step .num{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#000;font-weight:800;font-size:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .step .tx{font-size:.78rem;line-height:1.35}.step .tx b{color:#fff}
+  .step.enc .num{background:var(--green)}
+  /* metrics */
+  .metric{display:flex;justify-content:space-between;font-size:.8rem;padding:5px 0;border-bottom:1px dashed var(--bd)}
+  .metric b{color:var(--blue)}
+  .kpis{display:flex;gap:10px}
+  .kpi{flex:1;text-align:center;background:var(--panel2);border:1px solid var(--bd);border-radius:10px;padding:10px 6px}
+  .kpi .n{font-size:1.7rem;font-weight:900;line-height:1}.kpi .l{font-size:.55rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-top:5px}
+  .note{font-size:.66rem;color:var(--mut);font-style:italic}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:12px;border-top:1px solid var(--bd);color:var(--mut);font-size:.68rem;letter-spacing:.04em}
+  .glow{position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(130px);opacity:.13;pointer-events:none}
+  .g1{background:var(--blue);top:-200px;right:-120px}.g2{background:var(--purple);bottom:-240px;left:-180px}
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="glow g1"></div><div class="glow g2"></div>
+
+  <div class="hdr">
+    <div>
+      <div class="brand">SECURE<b>//</b>IR-LINK</div>
+      <h1>Secure <em>Line-of-Sight</em> Device-to-Device<br>Communication over Infrared Light</h1>
+      <div class="tag">A wireless-free optical link between two ESP32 nodes using IR LEDs and photodiodes,
+        with the channel secured by an RSA-authenticated Diffie–Hellman key exchange.</div>
+    </div>
+    <div class="byline">
+      <div><span class="k">PROJECT</span> Secure IR LoS Link</div>
+      <div><span class="k">DOMAIN</span> Embedded Systems · Applied Cryptography</div>
+      <div><span class="k">HARDWARE</span> ESP32 · IR LED · Photodiode</div>
+      <div><span class="k">LINK</span> Optical · Line-of-sight</div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <!-- LEFT -->
+    <div class="stackcol">
+      <div class="box">
+        <h2>Abstract</h2>
+        <p class="lead">Radio links are easy to intercept and jam. This project builds a point-to-point
+          channel out of light instead of radio.</p>
+        <p>Two ESP32 nodes communicate over a direct infrared beam — an IR LED transmits, a photodiode
+          receives — so data only travels along an unobstructed line of sight. On top of this physical
+          channel, the two nodes negotiate a shared secret and encrypt every message, giving confidentiality
+          even if the beam were observed.</p>
+      </div>
+      <div class="box">
+        <h2>Why infrared / line-of-sight?</h2>
+        <ul>
+          <li><b>Hard to intercept</b> — no omnidirectional RF; an attacker must physically sit in the beam.</li>
+          <li><b>No spectrum / licensing</b> — uses visible-adjacent IR, not congested radio bands.</li>
+          <li><b>Contained</b> — signal stops at walls and obstacles, naturally limiting range of exposure.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>Bill of materials</h2>
+        <div class="stackchips">
+          <span class="chip">ESP32 ×2</span><span class="chip">IR LED</span><span class="chip">IR photodiode</span>
+          <span class="chip">BC547 transistor</span><span class="chip">330Ω</span><span class="chip">10kΩ</span>
+          <span class="chip">1kΩ</span><span class="chip">potentiometer</span><span class="chip">breadboard</span>
+          <span class="chip">jumper wires</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE -->
+    <div class="stackcol">
+      <div class="box">
+        <h2>Physical link (hardware flow)</h2>
+        <div class="link">
+          <div class="dev tx"><div class="h">ESP32 — Transmitter</div><div class="s">GPIO 17 → 330Ω → IR LED</div></div>
+          <div class="beam"><div class="w">))))))))</div><div class="lbl">IR BEAM · LINE OF SIGHT</div></div>
+          <div class="dev rx"><div class="h">ESP32 — Receiver</div><div class="s">photodiode → BC547 → GPIO 16</div></div>
+        </div>
+        <div class="chain">
+          TX path: <b>GPIO 17</b> → <b>330Ω</b> → <b>IR LED</b> &nbsp;·&nbsp;
+          RX path: <b>IR photodiode</b> → <b>BC547</b> (amplify) → <b>GPIO 16</b> → <b>ESP32</b>
+        </div>
+        <p style="margin-top:10px;font-size:.78rem;color:var(--mut)">The transmitter modulates the IR LED; the photodiode
+          converts received light to a signal the BC547 amplifies into a clean logic level the receiving ESP32 decodes.
+          A potentiometer tunes the receiver's sensitivity threshold.</p>
+      </div>
+
+      <div class="box">
+        <h2>Security — handshake &amp; encryption</h2>
+        <div class="hs">
+          <div class="step"><div class="num">1</div><div class="tx"><b>Identity / key setup.</b> Each node holds an RSA key pair; public keys are exchanged and used to authenticate the peer (defeating a man-in-the-beam impostor).</div></div>
+          <div class="step"><div class="num">2</div><div class="tx"><b>Diffie–Hellman exchange.</b> Both nodes send DH public values; each derives the same shared secret, which is never transmitted.</div></div>
+          <div class="step"><div class="num">3</div><div class="tx"><b>Session key.</b> The shared secret becomes a symmetric session key for this conversation.</div></div>
+          <div class="step enc"><div class="num">4</div><div class="tx"><b>Encrypted messaging.</b> Every payload is encrypted with the session key before it is modulated onto the IR beam, and decrypted on the far side.</div></div>
+        </div>
+        <p class="note" style="margin-top:9px">RSA authenticates the parties and protects the exchange; Diffie–Hellman
+          establishes a fresh shared key so a captured transcript cannot be trivially replayed or read.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="stackcol">
+      <div class="box">
+        <h2>What it demonstrates</h2>
+        <div class="kpis">
+          <div class="kpi"><div class="n" style="color:var(--green)">2</div><div class="l">ESP32 nodes</div></div>
+          <div class="kpi"><div class="n" style="color:var(--blue)">RSA</div><div class="l">+ DH</div></div>
+          <div class="kpi"><div class="n" style="color:var(--yellow)">IR</div><div class="l">LoS link</div></div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="metric"><span>Channel</span><b>Optical / IR</b></div>
+          <div class="metric"><span>Key exchange</span><b>Diffie–Hellman</b></div>
+          <div class="metric"><span>Peer authentication</span><b>RSA</b></div>
+          <div class="metric" style="border:none"><span>Payload</span><b>Encrypted</b></div>
+        </div>
+      </div>
+
+      <div class="box">
+        <h2>Threat model</h2>
+        <ul>
+          <li><b>Eavesdropper</b> — even if light is captured, payloads are encrypted under a key never sent in clear.</li>
+          <li><b>Impostor node</b> — RSA authentication rejects a peer without the expected key.</li>
+          <li><b>RF attacker</b> — irrelevant: there is no radio surface to attack.</li>
+        </ul>
+      </div>
+
+      <div class="box">
+        <h2>Future work</h2>
+        <ul>
+          <li>Higher symbol rate / modulation for greater throughput</li>
+          <li>Forward error correction against ambient-light noise</li>
+          <li>Per-message nonces &amp; authenticated encryption (AEAD)</li>
+          <li>Longer range with focusing optics</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="mono">SECURE//IR-LINK · line-of-sight optical communication</div>
+    <div class="mono">RSA-AUTH → DH KEY EXCHANGE → SESSION KEY → ENCRYPTED IR PAYLOAD</div>
+  </div>
+</div>
+</body>
+</html>
