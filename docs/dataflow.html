@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Code & Data Flow</title>
+<style>
+  :root{--bg:#0a0a0c;--panel:#121216;--panel2:#17171c;--fg:#f1f1f3;--mut:#8a8a93;--bd:#262630;
+    --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;--purple:#b14cff;
+    --read:#5b8cff;--write:#38e07a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"Helvetica Neue",Arial,sans-serif;font-size:14px;
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .wrap{max-width:1320px;margin:0 auto;padding:30px 24px 70px}
+  h1{font-size:1.7rem;font-weight:900;letter-spacing:-.02em;margin:0 0 2px}
+  .sub{color:var(--mut);font-size:.85rem;margin-bottom:22px}
+  .legend{display:flex;gap:18px;margin-bottom:20px;font-size:.76rem;color:var(--mut);flex-wrap:wrap}
+  .legend b{color:var(--fg)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  .d-read{background:var(--read)}.d-write{background:var(--write)}
+  .stage{margin-bottom:12px}
+  .lab{font-size:.64rem;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+  .lab::before{content:"";width:14px;height:2px;background:var(--green)}
+  .box{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+  .file{font-size:.66rem;color:var(--green)}
+  .row{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
+  .entry{display:flex;gap:14px}
+  .node{background:var(--panel);border:1px solid var(--bd);border-radius:11px;padding:13px 15px;flex:1;min-width:0}
+  .node .t{font-weight:800;font-size:.92rem}.node .f{font-size:.64rem;color:var(--green);margin:2px 0 7px}
+  .node .d{font-size:.78rem;color:#cfcfd6;line-height:1.45}
+  .arrowdown{text-align:center;color:var(--green);font-size:1.1rem;font-weight:900;line-height:.8;margin:4px 0}
+  /* phase + store layout */
+  .flow{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+  .phases{display:flex;flex-direction:column;gap:10px}
+  .phase{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:12px 15px;position:relative}
+  .phase .h{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+  .phase .pn{font-size:.6rem;font-weight:800;letter-spacing:.1em;color:#000;padding:2px 8px;border-radius:999px}
+  .p1 .pn{background:var(--green)}.p2 .pn{background:var(--blue)}.p3 .pn{background:var(--yellow)}.p4 .pn{background:var(--red);color:#fff}.p5 .pn{background:var(--purple);color:#fff}
+  .phase .nm{font-weight:800}.phase .tools{font-size:.64rem;color:var(--mut);margin-left:auto}
+  .io{display:flex;gap:16px;flex-wrap:wrap;font-size:.74rem;margin-top:4px}
+  .io .r{color:var(--read)}.io .w{color:var(--write)}
+  .io code{background:var(--panel2);border:1px solid var(--bd);border-radius:4px;padding:1px 6px;color:#cfcfd6;font-size:.68rem}
+  /* store */
+  .store{background:var(--panel);border:1px solid var(--blue);border-radius:12px;padding:14px 15px;position:sticky;top:16px}
+  .store h3{margin:0 0 4px;font-size:.78rem;letter-spacing:.06em}
+  .store .f{font-size:.64rem;color:var(--green);margin-bottom:10px}
+  .tbl{display:flex;align-items:center;gap:8px;font-size:.78rem;padding:7px 0;border-bottom:1px dashed var(--bd)}
+  .tbl:last-child{border:none}
+  .tbl .nm{font-weight:700}.tbl .by{margin-left:auto;font-size:.6rem;color:var(--mut)}
+  .tbl .ico{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+  .foot{margin-top:24px;color:var(--mut);font-size:.72rem;border-top:1px solid var(--bd);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ReconToReport — Code &amp; Data Flow</h1>
+  <div class="sub mono">how a run moves from input → phases → shared SQLite store → report</div>
+  <div class="legend">
+    <span><span class="dot d-write"></span><b>writes</b> to the store</span>
+    <span><span class="dot d-read"></span><b>reads</b> from the store</span>
+    <span class="mono" style="color:var(--green)">green text = source file</span>
+  </div>
+
+  <!-- ENTRY -->
+  <div class="lab">1 · Entry &amp; setup</div>
+  <div class="entry">
+    <div class="node"><div class="t">CLI</div><div class="f mono">recontoreport/cli.py</div>
+      <div class="d"><span class="mono">r2r run --url … --phases … --i-have-authorization</span> — parses flags, resolves target.</div></div>
+    <div class="node"><div class="t">Web UI</div><div class="f mono">recontoreport/web/app.py + templates/index.html</div>
+      <div class="d">Dashboard form → <span class="mono">/scan</span> builds the same config, runs in a background thread, polls <span class="mono">/status</span>.</div></div>
+    <div class="node"><div class="t">Config</div><div class="f mono">recontoreport/config.py</div>
+      <div class="d">Loads YAML or <span class="mono">from_url()</span>; holds target, scope, phases, wordlist, nuclei, auth roles.</div></div>
+  </div>
+  <div class="arrowdown">↓ Config object</div>
+
+  <!-- ORCHESTRATOR -->
+  <div class="lab">2 · Orchestration</div>
+  <div class="box">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div class="t" style="font-weight:800;font-size:.95rem">Orchestrator</div>
+      <div class="file mono">recontoreport/orchestrator.py · phases/__init__.py</div>
+    </div>
+    <div class="d" style="font-size:.8rem;color:#cfcfd6;margin-top:6px;line-height:1.5">
+      <span class="w" style="color:var(--write)">writes</span> a <code class="mono">targets</code> row ·
+      <span class="mono">resolve_phases()</span> expands dependencies (e.g. 4 → 1,3,4) ·
+      <b>authorization gate</b> blocks active phases without consent ·
+      runs each phase in order with per-phase error isolation &amp; retry policy ·
+      hands each a <span class="mono">PhaseContext(session_factory, target_id)</span>.
+    </div>
+  </div>
+  <div class="arrowdown">↓ per phase</div>
+
+  <!-- PHASES + STORE -->
+  <div class="lab">3 · Phases (each: shell out → capture → normalize → persist)</div>
+  <div class="flow">
+    <div class="phases">
+      <div class="phase p1">
+        <div class="h"><span class="pn">P1</span><span class="nm">Recon</span><span class="tools mono">crawler · subfinder · ffuf</span></div>
+        <div class="file mono">phases/phase1_recon.py → tools/crawler.py, tools/runner.py</div>
+        <div class="io"><span class="w">writes → <code>assets</code> <code>http_transactions</code> <code>findings</code></span></div>
+      </div>
+      <div class="phase p2">
+        <div class="h"><span class="pn">P2</span><span class="nm">Traffic / Auth</span><span class="tools mono">mitmproxy · Playwright</span></div>
+        <div class="file mono">phases/phase2_traffic.py → tools/mitm_addon.py, tools/capture.py</div>
+        <div class="io"><span class="w">writes → <code>http_transactions</code> <code>auth_contexts</code></span></div>
+      </div>
+      <div class="phase p3">
+        <div class="h"><span class="pn">P3</span><span class="nm">Scan</span><span class="tools mono">nuclei · XSS · privesc</span></div>
+        <div class="file mono">phases/phase3_scan.py → tools/runner.py, Playwright</div>
+        <div class="io"><span class="r">reads ← <code>assets</code> <code>auth_contexts</code> <code>http_transactions</code></span>
+          <span class="w">writes → <code>findings</code> <code>http_transactions</code></span></div>
+      </div>
+      <div class="phase p4">
+        <div class="h"><span class="pn">P4</span><span class="nm">Exploit</span><span class="tools mono">JWT · sqlmap</span></div>
+        <div class="file mono">phases/phase4_exploit.py → tools/jwt_analysis.py, tools/runner.py</div>
+        <div class="io"><span class="r">reads ← <code>http_transactions</code> <code>assets</code></span>
+          <span class="w">writes → <code>findings</code></span></div>
+      </div>
+      <div class="phase p5">
+        <div class="h"><span class="pn">P5</span><span class="nm">Harvest</span><span class="tools mono">secret scraping (offline)</span></div>
+        <div class="file mono">phases/phase5_harvest.py → tools/secrets.py</div>
+        <div class="io"><span class="r">reads ← <code>http_transactions</code></span>
+          <span class="w">writes → <code>secret_matches</code></span></div>
+      </div>
+    </div>
+
+    <!-- shared store -->
+    <div class="store">
+      <h3>Shared data store</h3>
+      <div class="f mono">models.py · db.py · SQLite + SQLAlchemy</div>
+      <div class="tbl"><span class="ico"></span><span class="nm">targets</span><span class="by">orchestrator</span></div>
+      <div class="tbl"><span class="ico"></span><span class="nm">assets</span><span class="by">P1 → P3/P4</span></div>
+      <div class="tbl"><span class="ico"></span><span class="nm">http_transactions</span><span class="by">P1/P2/P3 → P3/P4/P5</span></div>
+      <div class="tbl"><span class="ico"></span><span class="nm">auth_contexts</span><span class="by">P2 → P3</span></div>
+      <div class="tbl"><span class="ico"></span><span class="nm">findings</span><span class="by">P1/P3/P4 → report</span></div>
+      <div class="tbl"><span class="ico"></span><span class="nm">evidence</span><span class="by">findings</span></div>
+      <div class="tbl"><span class="ico"></span><span class="nm">secret_matches</span><span class="by">P5 → report</span></div>
+      <div class="tbl"><span class="ico"></span><span class="nm">reports</span><span class="by">report gen</span></div>
+    </div>
+  </div>
+
+  <div class="arrowdown">↓ reads targets · findings · assets · secret_matches</div>
+
+  <!-- REPORT -->
+  <div class="lab">4 · Reporting</div>
+  <div class="box">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div class="t" style="font-weight:800;font-size:.95rem">Report generator</div>
+      <div class="file mono">report/generator.py → report/templates/report.html.j2 (+ .xml.j2)</div>
+    </div>
+    <div class="d" style="font-size:.8rem;color:#cfcfd6;margin-top:6px;line-height:1.5">
+      Groups findings by severity, renders CVSS / impact / PoC / remediation via Jinja2 →
+      writes <span class="mono">report-&lt;target&gt;-&lt;ts&gt;.html</span> and a <code class="mono">reports</code> row.
+      The UI serves it at <span class="mono">/report/&lt;run_id&gt;</span>.
+    </div>
+  </div>
+
+  <div class="foot mono">dataflow: cli/web → config → orchestrator(targets) → P1..P5 (read/write shared SQLite) → report generator → HTML/XML</div>
+</div>
+</body>
+</html>
