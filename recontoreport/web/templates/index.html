@@ -204,7 +204,9 @@ async function startDemo(){
     const card=document.querySelectorAll('.role');const el=card[card.length-1];
     el.querySelector('.r_name').value=role.name;
     el.querySelector('.r_priv').value=role.privilege_level;
-    el.querySelector('.r_cookie').value=role.cookie;
+    if(role.login_url){el.querySelector('.r_login').value=role.login_url;
+      el.querySelector('.r_user').value=role.username;el.querySelector('.r_pass').value=role.password;}
+    if(role.cookie)el.querySelector('.r_cookie').value=role.cookie;
   }
   document.getElementById('formErr').textContent='Demo target + admin/user roles loaded — click Run scan.';
 }

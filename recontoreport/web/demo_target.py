@@ -46,10 +46,31 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body.encode())
 
+    def do_POST(self):  # noqa: N802
+        if urlparse(self.path).path == "/login":
+            import urllib.parse
+            length = int(self.headers.get("Content-Length", 0))
+            data = urllib.parse.parse_qs(self.rfile.read(length).decode())
+            user = (data.get("username") or [""])[0]
+            # any known user logs in; cookie value = the username (admin / user)
+            self.send_response(302)
+            self.send_header("Set-Cookie", f"session={user}; Path=/")
+            self.send_header("Location", "/")
+            self.end_headers()
+            return
+        self._send(404, "not found")
+
     def do_GET(self):  # noqa: N802
         p = urlparse(self.path)
         qs = parse_qs(p.query)
         cookie = self.headers.get("Cookie", "")
+
+        if p.path == "/login":
+            return self._send(200, "<html><body><h2>Login</h2>"
+                "<form method='post' action='/login'>"
+                "<input name='username' placeholder='username'>"
+                "<input name='password' type='password' placeholder='password'>"
+                "<button type='submit'>Log in</button></form></body></html>")
 
         if p.path == "/admin/users":
             # BUG: any logged-in cookie is accepted; anonymous is denied.

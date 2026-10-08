@@ -97,6 +97,7 @@ class Orchestrator:
                 log=logging.getLogger(f"recontoreport.phase{number}"),
             )
             phase = phase_cls(ctx)
+            log.info("──────── Phase %s (%s) starting ────────", number, phase.name)
 
             # Authorization gate: refuse active phases without the flag.
             if phase.active and not self.authorized:

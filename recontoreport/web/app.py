@@ -188,9 +188,16 @@ def create_app() -> Flask:
                 globals()["_DEMO_STARTED"] = True
             except OSError:
                 pass  # already running on the port
+        base = url.rstrip("/")
         return jsonify({"url": url, "roles": [
-            {"name": "admin", "privilege_level": 10, "cookie": "session=admin"},
-            {"name": "user", "privilege_level": 1, "cookie": "session=user"},
+            {"name": "admin", "privilege_level": 10, "login_url": base + "/login",
+             "username": "admin", "password": "admin",
+             "username_selector": "input[name=username]", "password_selector": "input[name=password]",
+             "submit_selector": "button[type=submit]"},
+            {"name": "user", "privilege_level": 1, "login_url": base + "/login",
+             "username": "user", "password": "user",
+             "username_selector": "input[name=username]", "password_selector": "input[name=password]",
+             "submit_selector": "button[type=submit]"},
         ]})
 
     @app.get("/report/<run_id>")
