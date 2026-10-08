@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Stall Kit</title>
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#121216; --panel2:#17171c; --fg:#f1f1f3; --mut:#8a8a93; --bd:#262630;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff; --purple:#b14cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .page{width:960px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px;
+    padding:38px 42px 30px}
+  .brand{font-size:.85rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--green)}
+  .kicker{font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;color:var(--green);margin-top:4px}
+  h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--green);margin:30px 0 12px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:15px;height:2px;background:var(--green)}
+  p{margin:0 0 10px;line-height:1.55;font-size:.95rem;color:#dcdce0}
+  /* board line */
+  .board{background:var(--panel);border:1px solid var(--green);border-radius:14px;padding:26px 28px;margin:16px 0 4px;text-align:center}
+  .board .big{font-size:1.9rem;font-weight:900;letter-spacing:-.02em;line-height:1.15;margin-bottom:10px}
+  .board .big em{color:var(--green);font-style:normal}
+  .board .sub{font-size:1rem;color:var(--mut)}
+  .readat{font-size:.66rem;color:var(--mut);text-align:center;margin-top:6px;letter-spacing:.06em}
+  /* analogy */
+  .analogy{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+  .acard{border:1px solid var(--bd);border-radius:12px;padding:18px 20px;background:var(--panel)}
+  .acard.them{border-color:var(--bd)}
+  .acard.us{border-color:var(--green)}
+  .acard .role{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+  .acard.them .role{color:var(--mut)}.acard.us .role{color:var(--green)}
+  .acard .who{font-size:1.25rem;font-weight:800;margin-bottom:8px}
+  .acard p{font-size:.88rem;margin:0;color:#cfcfd6}
+  .say{background:#000;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:14px 16px;margin:12px 0;font-size:.95rem;line-height:1.55;color:#eaeaee}
+  .say b{color:var(--green)}
+  /* ladder */
+  .ladder{display:flex;flex-direction:column;gap:12px}
+  .rung{display:grid;grid-template-columns:120px 1fr;gap:16px;border:1px solid var(--bd);border-radius:12px;padding:15px 18px;background:var(--panel)}
+  .rung .lv{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800}
+  .rung .who{font-size:.72rem;color:var(--mut);margin-top:3px;line-height:1.35}
+  .rung .body{font-size:.9rem;line-height:1.5;color:#dcdce0}
+  .rung .body b{color:#fff}
+  .l0{border-left:4px solid var(--mut)}.l0 .lv{color:var(--mut)}
+  .l1{border-left:4px solid var(--green)}.l1 .lv{color:var(--green)}
+  .l2{border-left:4px solid var(--blue)}.l2 .lv{color:var(--blue)}
+  .l3{border-left:4px solid var(--purple)}.l3 .lv{color:var(--purple)}
+  .quote{color:#f1f1f3}
+  /* two-col lower */
+  .low{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:4px}
+  ul{margin:0;padding-left:18px}li{font-size:.88rem;line-height:1.5;margin-bottom:8px;color:#dcdce0}
+  li b{color:#fff}
+  .opener{background:var(--panel);border:1px dashed var(--yellow);border-radius:12px;padding:16px 18px}
+  .opener .q{font-size:1.15rem;font-weight:800;color:var(--yellow);margin-bottom:6px}
+  .opener p{font-size:.85rem;margin:0;color:#e6e0c8}
+  footer{margin-top:26px;color:var(--mut);font-size:.68rem;border-top:1px solid var(--bd);padding-top:12px;text-align:center}
+  @media print{html,body{background:#fff}.page{border:none;margin:0;background:#fff;color:#111}
+    p,.rung .body,li{color:#222}.board,.acard,.rung,.opener{background:#fff}}
+  @media(max-width:680px){.analogy,.low{grid-template-columns:1fr}.rung{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">RECON<b>//</b>REPORT</div>
+  <div class="kicker">Exhibition Stall Kit · read off a tablet or print</div>
+
+  <!-- BOARD LINE -->
+  <h2>What goes on the board</h2>
+  <div class="board">
+    <div class="big">We don't scan for weak locks.<br>We <em>walk in</em> and show you what gets stolen.</div>
+    <div class="sub">An automated security tool that thinks like an attacker.</div>
+  </div>
+  <div class="readat">Big enough to read from 3 feet away. No jargon. It should make a stranger ask "how?"</div>
+
+  <!-- ANALOGY -->
+  <h2>The analogy you open with</h2>
+  <div class="analogy">
+    <div class="acard them">
+      <div class="role">Most security tools</div>
+      <div class="who">🔍 The home inspector</div>
+      <p>Walks around and hands you a checklist: this lock is weak, this window's unlatched. Useful — but it's just a list.</p>
+    </div>
+    <div class="acard us">
+      <div class="role">ReconToReport</div>
+      <div class="who">🥷 The burglar</div>
+      <p>Opens the door, walks in, and shows you <i>"here's the drawer I'd open, here's what I'd take"</i> — then writes you the report. From just a web address.</p>
+    </div>
+  </div>
+  <div class="say">After this line, people usually ask <b>"…how?"</b> — now <b>they</b> opened the technical door, not you. Let them pull you deeper; don't push.</div>
+
+  <!-- LADDER -->
+  <h2>The escalation ladder — match the person, stop where they stop</h2>
+  <div class="ladder">
+    <div class="rung l0">
+      <div><div class="lv">Layer 0</div><div class="who">The walk-by<br>(not stopping)</div></div>
+      <div class="body">Just the board line, then: <span class="quote">"Want to see it in action?"</span> Low commitment. Point at the screen.</div>
+    </div>
+    <div class="rung l1">
+      <div><div class="lv">Layer 1</div><div class="who">Curious<br>non-techie<br>(most people)</div></div>
+      <div class="body">The burglar analogy, then: <span class="quote">"You give it one web address. It explores the site, logs in like a real user, and tries to reach things it shouldn't — like a customer suddenly opening the admin panel. When it gets in, it proves it and writes the report."</span> <b>Stop here.</b> No "CWE", no "SQL".</div>
+    </div>
+    <div class="rung l2">
+      <div><div class="lv">Layer 2</div><div class="who">Technical<br>visitor /<br>asks a real Q</div></div>
+      <div class="body"><span class="quote">"Its headline trick: it logs in as two users at once — an admin and a normal user — and checks whether the normal user can reach the admin's pages. A normal scanner can't do that, because it has no idea who it's logged in as. We hold both and compare."</span> <b>This is the line that impresses.</b></div>
+    </div>
+    <div class="rung l3">
+      <div><div class="lv">Layer 3</div><div class="who">Expert /<br>judge grilling<br>you</div></div>
+      <div class="body">Drop to mechanism + honest limits: everything writes to <b>one shared store</b> so each step attacks what the last one found; it's <b>pre-exploitation</b> emulation — no C2, no lateral movement, some findings need manual confirmation. (Full kit: the study guide.)</div>
+    </div>
+  </div>
+  <div class="say">The skill is <b>reading which layer they're on and stopping there.</b> Over-explaining loses a layperson; under-explaining loses an expert.</div>
+
+  <!-- LOWER -->
+  <div class="low">
+    <div>
+      <h2 style="margin-top:14px">Running the stall</h2>
+      <ul>
+        <li><b>Loop the demo</b> on screen (live or a short screen-recording) — motion pulls people in.</li>
+        <li><b>One handout</b> ready — the pitch one-pager — for "got something I can take?"</li>
+        <li><b>Poster behind you</b> carries the detail so you never have to recite it.</li>
+        <li><b>Have the finished report open</b> in a tab as proof, in case the live run is slow.</li>
+      </ul>
+    </div>
+    <div>
+      <h2 style="margin-top:14px">Your default opener</h2>
+      <div class="opener">
+        <div class="q">"Want the 30-second version?"</div>
+        <p>Say it to anyone who slows down. Low commitment — almost everyone says yes. Then go straight to the burglar analogy.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>ReconToReport · stall kit · pair with pitch.html (handout) · poster.html (board) · STUDY_GUIDE.md (viva)</footer>
+</div>
+</body>
+</html>
