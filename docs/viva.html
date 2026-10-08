@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Viva Prep</title>
+<style>
+  :root{--bg:#0a0a0c;--panel:#121216;--panel2:#17171c;--fg:#f1f1f3;--mut:#8a8a93;--bd:#262630;
+    --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;--purple:#b14cff;}
+  *{box-sizing:border-box}html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .page{width:1000px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px;
+    padding:38px 42px 34px}
+  .brand{font-size:.85rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--green)}
+  .kicker{font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;color:var(--green);margin-top:4px}
+  h1{font-size:1.7rem;font-weight:900;letter-spacing:-.02em;margin:10px 0 2px}
+  h2{font-size:.76rem;text-transform:uppercase;letter-spacing:.15em;color:var(--green);margin:30px 0 12px;
+    display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bd);padding-bottom:9px}
+  h2 .nx{color:var(--mut);font-weight:700}
+  p{margin:0 0 10px;line-height:1.58;font-size:.93rem;color:#dcdce0}
+  .truth{background:var(--panel);border:1px solid var(--green);border-radius:12px;padding:18px 20px;font-size:1rem;line-height:1.6}
+  .truth b{color:var(--green)}
+  /* layer stack */
+  .layers{display:flex;flex-direction:column;gap:7px;margin:6px 0}
+  .layer{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:11px 14px}
+  .layer .lz{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--green);width:92px;flex-shrink:0;font-weight:800}
+  .layer .lt{font-size:.9rem;color:#dcdce0}.layer .lt b{color:#fff}
+  .arrow{text-align:center;color:var(--green);font-size:.9rem;margin:-2px 0}
+  /* feature chips */
+  .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .fc{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:12px 14px}
+  .fc h4{margin:0 0 5px;font-size:.84rem;color:var(--fg)}.fc p{margin:0;font-size:.8rem;color:var(--mut);line-height:1.45}
+  /* Q&A */
+  .qa{border-left:3px solid var(--bd);padding:4px 0 4px 16px;margin:14px 0}
+  .qa.hot{border-left-color:var(--red)}
+  .q{font-weight:800;font-size:.95rem;margin:0 0 6px;color:var(--fg)}
+  .q::before{content:"Q  ";color:var(--green);font-family:ui-monospace,monospace}
+  .a{font-size:.9rem;line-height:1.55;color:#cfcfd6;margin:0}
+  .a::before{content:"A  ";color:var(--blue);font-family:ui-monospace,monospace;font-weight:700}
+  .tag{display:inline-block;background:#000;border:1px solid var(--red);color:var(--red);border-radius:4px;
+    padding:1px 7px;font-size:.6rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-left:8px;vertical-align:middle}
+  .note{background:#000;border:1px solid var(--yellow);border-radius:10px;padding:13px 16px;font-size:.86rem;color:#e6e0c8;line-height:1.5}
+  .note b{color:var(--yellow)}
+  footer{margin-top:28px;color:var(--mut);font-size:.68rem;border-top:1px solid var(--bd);padding-top:12px;text-align:center}
+  @media print{html,body{background:#fff}.page{border:none;margin:0;background:#fff;color:#111}
+    p,.a,.layer .lt,.fc p{color:#1a1a1a}.truth,.layer,.fc,.note{background:#fff}}
+  @media(max-width:640px){.layer{flex-direction:column;align-items:flex-start;gap:4px}.layer .lz{width:auto}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">RECON<b>//</b>REPORT</div>
+  <div class="kicker">Viva preparation guide · architecture · tools · security application</div>
+  <h1>Defend the project in a viva</h1>
+
+  <!-- TRUTH -->
+  <h2>The one paragraph to internalise</h2>
+  <div class="truth">ReconToReport is a <b>pipeline orchestrator</b> that runs a sequence of open-source and
+  custom security tools in <b>attacker order</b> — recon → authenticated access → scanning → exploitation →
+  harvest → report — and forces every tool's output into <b>one shared database</b>. The intellectual
+  contribution is that <b>integration</b>: because findings live in one store, a later tool can act on what an
+  earlier tool discovered, turning isolated scans into a demonstrated attack chain. Everything else — the
+  grade, the ATT&amp;CK mapping, the report — is a view over that store. <i>If you understand why the shared
+  store matters, you can answer almost anything.</i></div>
+
+  <!-- ARCHITECTURE -->
+  <h2>Broad architecture <span class="nx">— four layers + one store</span></h2>
+  <div class="layers">
+    <div class="layer"><div class="lz">Input</div><div class="lt"><b>CLI or web UI</b> — you give a target URL and pick phases; active phases need an explicit authorization flag.</div></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><div class="lz">Config</div><div class="lt">One <b>Config object</b> — target, scope rules, auth roles, tool paths, stealth options — built from a form/flags.</div></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><div class="lz">Orchestration</div><div class="lt"><b>Orchestrator</b> — resolves phase dependencies, enforces the authorization gate, runs each phase in isolation so one failure never kills the run (per-phase try/except + timeouts).</div></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><div class="lz">Execution</div><div class="lt"><b>5 phases</b> shelling out to tools and running custom checks — each reads/writes the shared store.</div></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><div class="lz">Storage</div><div class="lt"><b>SQLite via an ORM</b> — one schema (targets, assets, transactions, auth-contexts, findings, secrets, reports) every phase shares. <i>This is the heart.</i></div></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><div class="lz">Output</div><div class="lt"><b>Report generator</b> + UI views — severity-ranked report, A–F grade, attacker story, ATT&amp;CK kill chain, Navigator export.</div></div>
+  </div>
+
+  <!-- WORKING -->
+  <h2>How a run actually works</h2>
+  <p><b>Phase 1 Recon</b> — passive subdomain discovery, a built-in crawler that maps pages/forms/params and
+  saves response bodies, and content/directory fuzzing for hidden files. <b>Phase 2 Access</b> — logs in as
+  configured roles (real browser or a pasted cookie) and stores each session with a privilege level; can
+  passively capture traffic. <b>Phase 3 Scan</b> — a template engine for known flaws, a security-header/CORS
+  audit, the broken-access-control differential, and a behavioural XSS check. <b>Phase 4 Exploit</b> — token
+  (JWT) analysis, error-based SQL injection, open-redirect and path-traversal probes, and sqlmap when present.
+  <b>Phase 5 Harvest</b> — scrapes exposed secrets from captured traffic, then renders the report. Each phase
+  reads what the previous wrote; the order mirrors a real engagement.</p>
+
+  <!-- FEATURES -->
+  <h2>Features at a glance</h2>
+  <div class="feat">
+    <div class="fc"><h4>Shared-store chaining</h4><p>Each tool acts on earlier findings — the core novelty.</p></div>
+    <div class="fc"><h4>Broken-access-control diff</h4><p>Anon vs low-priv comparison a scanner can't do.</p></div>
+    <div class="fc"><h4>Security grade A–F</h4><p>One weighted score from the severity counts.</p></div>
+    <div class="fc"><h4>Attacker's-eye story</h4><p>Plain-English "how I'd break in" from the findings.</p></div>
+    <div class="fc"><h4>MITRE ATT&CK mapping</h4><p>Each finding → a technique; names/URLs from MITRE's STIX data.</p></div>
+    <div class="fc"><h4>Kill-chain + next moves</h4><p>Coverage matrix and predicted follow-on techniques.</p></div>
+    <div class="fc"><h4>Navigator layer export</h4><p>A real MITRE Navigator JSON deliverable.</p></div>
+    <div class="fc"><h4>Fault isolation</h4><p>One tool failing never kills the run.</p></div>
+  </div>
+
+  <!-- QA ARCHITECTURE -->
+  <h2>Q&amp;A — architecture &amp; design</h2>
+
+  <div class="qa"><p class="q">Isn't this just a wrapper around existing tools?</p>
+  <p class="a">Deliberately, yes — the contribution isn't a new exploit, it's the integration. A shared data
+  store lets a later tool use what an earlier one found, so you get a demonstrated chain instead of five
+  disconnected tool outputs. A bag of scripts can't do that.</p></div>
+
+  <div class="qa"><p class="q">Why a shared database instead of passing data between tools directly?</p>
+  <p class="a">Tools emit wildly different formats. Normalising everything into one schema means any phase can
+  query any earlier result uniformly, the report has a single source of truth, and adding a new tool means
+  writing to the same tables — no rewiring. It's the integration layer.</p></div>
+
+  <div class="qa"><p class="q">Why phases, and why that order?</p>
+  <p class="a">The order mirrors a real engagement: you can't test authenticated access before you've logged
+  in, can't exploit a parameter before recon found it. Phases make dependencies explicit and let the
+  orchestrator run them with isolation and retries.</p></div>
+
+  <div class="qa"><p class="q">What happens if one tool crashes or hangs?</p>
+  <p class="a">Each phase runs inside try/except and each external tool call has a timeout; a failure is logged
+  and recorded as a phase result, then the run continues. One tool dying never takes the whole run down.</p></div>
+
+  <div class="qa"><p class="q">How do you keep false positives down?</p>
+  <p class="a">Findings carry a confidence level; XSS is only rated high if it actually executed in a real
+  browser; the access-control finding only fires on a genuine success the low-priv user shouldn't get; and
+  harvested secrets are quarantined in a separate table until a human promotes them.</p></div>
+
+  <div class="qa"><p class="q">How is scanning kept within authorization?</p>
+  <p class="a">Scope rules (host allow/deny) gate every active request, and phases that send traffic refuse to
+  run without an explicit "I have authorization" flag. Passive, offline steps (like secret scraping) run
+  without it.</p></div>
+
+  <!-- QA TOOLS -->
+  <h2>Q&amp;A — tools &amp; how they work</h2>
+
+  <div class="qa"><p class="q">Walk me through the broken-access-control check.</p>
+  <p class="a">For each protected page it makes three requests — anonymous, as a high-priv session, as a
+  low-priv session — and compares. A finding fires only when anonymous is denied, the privileged user is
+  allowed, and the low-priv user is <i>also</i> allowed: the page is gated, but the wrong person gets in.
+  It needs two identities held at once, which is why a stateless scanner can't produce it.</p></div>
+
+  <div class="qa"><p class="q">How does the SQL-injection check work without external tools?</p>
+  <p class="a">It appends a single quote to each parameter and re-requests; if a recognisable database error
+  surfaces in the response, the input is reaching a query unsanitised. sqlmap is used too when installed, but
+  the built-in check means SQLi detection has zero dependencies.</p></div>
+
+  <div class="qa"><p class="q">How does the XSS check avoid guessing?</p>
+  <p class="a">It injects a unique marker into a parameter, loads the page in a real headless browser, and
+  checks whether the marker reaches the DOM unescaped or actually triggers script execution — rated high only
+  if it fired.</p></div>
+
+  <div class="qa"><p class="q">Where do the CWE and ATT&CK numbers come from?</p>
+  <p class="a">CWEs are assigned by our custom checks and by the template engine's metadata. For ATT&amp;CK, the
+  technique <i>names and official URLs</i> are loaded from data distilled directly from MITRE's ATT&amp;CK
+  STIX bundle; <i>which</i> technique a vulnerability class maps to is our own curated ruleset, because MITRE
+  publishes no canonical CWE-to-technique mapping. It's a deterministic, auditable lookup.</p></div>
+
+  <div class="qa"><p class="q">How do the open-redirect and path-traversal checks confirm a hit?</p>
+  <p class="a">Open redirect: inject an external URL into redirect-style params and see if the server sends the
+  browser off-site (without following it ourselves). Traversal: inject a <span class="mono">../../etc/passwd</span>
+  payload and confirm by the unmistakable <span class="mono">root:x:0:0</span> signature in the response.</p></div>
+
+  <!-- QA SECURITY APPLICATION -->
+  <h2>Q&amp;A — security application of R2R</h2>
+
+  <div class="qa"><p class="q">Who uses this and for what?</p>
+  <p class="a">Authorized security testers and internal red/purple teams, to turn one URL into a prioritized,
+  evidence-backed picture of an app's risk in minutes — automating the reconnaissance-to-access-to-escalation
+  workflow that's otherwise slow and manual, and producing the client deliverable automatically.</p></div>
+
+  <div class="qa"><p class="q">How is this different from a vulnerability scanner?</p>
+  <p class="a">A scanner answers "what's broken?" and hands you a list. R2R answers "what could an attacker
+  chain together?" — it operates as an authenticated identity and proves escalation end-to-end, which a
+  stateless scanner architecturally cannot. We still run the scanner-style sweep too, so we're never behind
+  on coverage.</p></div>
+
+  <div class="qa hot"><p class="q">If it's an attacker tool, how do you have the credentials in the first place?<span class="tag">trap</span></p>
+  <p class="a">We don't need privileged creds. The finding is that a <i>normal</i> account — the kind anyone
+  self-registers, phishes or buys in thirty seconds — reaches things it shouldn't. A low-priv foothold is the
+  cheap, everyday start of a real attack. Any admin session we hold is just a reference to confirm "this page
+  is genuinely protected," to avoid false positives — not part of the attack.</p></div>
+
+  <div class="qa hot"><p class="q">Is the ATT&CK mapping real or made up?<span class="tag">trap</span></p>
+  <p class="a">The technique IDs, names and URLs are genuine MITRE identifiers, loaded from their official STIX
+  bundle and version-pinned — we can refresh them with one script. The only thing we author is the mapping
+  from our finding types to those techniques, because no canonical source for that exists.</p></div>
+
+  <div class="qa"><p class="q">Could this be misused offensively?</p>
+  <p class="a">It only does pre-exploitation testing, every active phase is gated behind an explicit
+  authorization flag and scope rules, and it stops short of destructive actions. It's the same dual-use
+  posture as every pentest tool — built and gated for authorized testing.</p></div>
+
+  <div class="qa"><p class="q">What are its limits? <span class="nx" style="color:var(--mut);font-weight:400">(say these proactively)</span></p>
+  <p class="a">It's pre-exploitation adversary emulation for web apps — no command-and-control, no lateral
+  movement, no evasion. It finds known/common weakness patterns, not business-logic flaws, and some findings
+  still want manual confirmation. Being upfront about scope is a credibility signal, not a weakness.</p></div>
+
+  <div class="note"><b>The 5-point cram:</b> (1) it's an orchestrator, not a new exploit; (2) the shared store
+  is the novelty — tools chain off each other; (3) flow = recon → access → scan → exploit → harvest → report;
+  (4) flagship = broken access control a normal account shouldn't have, impossible for a stateless scanner;
+  (5) honest scope = pre-exploitation web emulation, some findings need manual confirmation.</div>
+
+  <footer>ReconToReport · viva prep · pair with script.html · toolchain.html · stall_kit.html · STUDY_GUIDE.md</footer>
+</div>
+</body>
+</html>
