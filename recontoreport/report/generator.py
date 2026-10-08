@@ -10,8 +10,15 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker, Session
 
+from ..attack import attack_for, build_attack_path
 from ..models import Asset, Finding, Report, SecretMatch, Target
 from ..schema import Severity
+
+
+def attack_technique(f) -> str:
+    """'T1190 Exploit Public-Facing Application' for one finding (Jinja global)."""
+    tid, tname, _ = attack_for(getattr(f, "cwe_id", None), getattr(f, "tool_source", None))
+    return f"{tid} {tname}"
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -19,10 +26,12 @@ _SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
 
 
 def _env() -> Environment:
-    return Environment(
+    env = Environment(
         loader=FileSystemLoader(str(_TEMPLATE_DIR)),
         autoescape=select_autoescape(["html", "xml"]),
     )
+    env.globals["attack_technique"] = attack_technique
+    return env
 
 
 def _collect(session: Session, target_id: int) -> dict:
@@ -55,6 +64,7 @@ def _collect(session: Session, target_id: int) -> dict:
         "assets": assets,
         "asset_count": len(assets),
         "secrets": secrets,
+        "attack": build_attack_path(findings),
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 

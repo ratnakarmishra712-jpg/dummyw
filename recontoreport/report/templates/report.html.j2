@@ -45,7 +45,17 @@
   .assets th{background:#000;color:var(--mut);font-size:.66rem;text-transform:uppercase}
   .empty{color:var(--mut);font-style:italic}
   footer{margin-top:50px;color:var(--mut);font-size:.72rem;border-top:1px solid var(--bd);padding-top:16px}
-  @media print{body{background:#fff;color:#111}.finding,.kpi{background:#fff}}
+  .chain{display:flex;gap:0;flex-wrap:wrap;margin:14px 0 8px}
+  .stage{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--bd);border-right:none;padding:12px 10px}
+  .stage:last-child{border-right:1px solid var(--bd)}
+  .stage.hit{border-color:var(--high);box-shadow:inset 0 0 0 1px var(--high)}
+  .stage .t{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+  .stage.hit .t{color:var(--high)}
+  .stage .c{font-size:1.5rem;font-weight:800;margin-top:4px}
+  .stage.hit .c{color:var(--high)}.stage.miss .c{color:var(--bd)}
+  .narr{background:#000;border:1px solid var(--high);border-radius:8px;padding:14px 16px;margin:10px 0;font-size:.92rem}
+  .ttag{display:inline-block;background:#000;border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:1px 7px;font-size:.72rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+  @media print{body{background:#fff;color:#111}.finding,.kpi,.stage{background:#fff}}
 </style>
 </head>
 <body>
@@ -81,6 +91,16 @@
   </div>
 
   {% if findings %}
+  <h2>Attack Path — MITRE ATT&amp;CK</h2>
+  <p>Findings are mapped to adversary tactics and assembled into a simulated kill chain — showing not just
+     <em>what</em> is weak but how an attacker would chain these weaknesses end-to-end.</p>
+  <div class="narr"><b>&#9654; </b>{{ attack.narrative }}</div>
+  <div class="chain">
+    {% for t in attack.by_tactic.keys() %}{% set hit = attack.by_tactic[t]|length %}
+    <div class="stage {{ 'hit' if hit else 'miss' }}"><div class="t">{{ t }}</div><div class="c">{{ hit }}</div></div>
+    {% endfor %}
+  </div>
+
   <h2>Findings Overview</h2>
   <table class="toc">
     <thead><tr><th>#</th><th>Finding</th><th>Severity</th><th>CWE</th></tr></thead>
@@ -106,6 +126,7 @@
       <div class="k">Severity</div><div><span class="badge b-{{ f.severity }}">{{ f.severity }}</span></div>
       <div class="k">CVSS</div><div>{{ cvss[f.severity] }} <span class="mono" style="color:var(--mut);font-size:.78rem">{{ vector[f.severity] }}</span></div>
       <div class="k">CWE / OWASP</div><div>{{ f.cwe_id or "—" }}{% if f.owasp_category %} · {{ f.owasp_category }}{% endif %}</div>
+      <div class="k">MITRE ATT&amp;CK</div><div><span class="ttag">{{ attack_technique(f) }}</span></div>
       <div class="k">Confidence</div><div>{{ f.confidence }}</div>
     </div>
     {% if f.description %}<div class="sec"><h4>Description</h4><div>{{ f.description }}</div></div>{% endif %}

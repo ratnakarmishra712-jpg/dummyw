@@ -52,6 +52,16 @@
   .sid{font-family:ui-monospace,monospace;font-size:.72rem;color:var(--mut);background:var(--panel2);border:1px solid var(--bd);border-radius:6px;padding:3px 8px}
   .badge{display:inline-block;padding:3px 10px;border-radius:5px;font-size:.66rem;font-weight:800;text-transform:uppercase;color:#000}
   .b-critical{background:var(--critical);color:#fff}.b-high{background:var(--high);color:#fff}.b-medium{background:var(--medium)}.b-low{background:var(--low)}.b-info{background:var(--info);color:#fff}
+  .ttag{display:inline-block;background:#000;border:1px solid var(--blue);color:var(--blue);border-radius:5px;padding:1px 7px;font-size:.68rem;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap}
+  .narr{background:#000;border:1px solid var(--high);border-radius:8px;padding:12px 14px;margin:4px 0 12px;font-size:.9rem;color:var(--fg)}
+  .chain{display:flex;gap:0;flex-wrap:wrap}
+  .stage{flex:1;min-width:110px;background:var(--panel2);border:1px solid var(--bd);border-right:none;padding:11px 10px}
+  .stage:last-child{border-right:1px solid var(--bd)}
+  .stage.hit{border-color:var(--high);box-shadow:inset 0 0 0 1px var(--high)}
+  .stage .st{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
+  .stage.hit .st{color:var(--high)}
+  .stage .sn{font-size:1.4rem;font-weight:800;margin-top:3px;color:var(--bd)}
+  .stage.hit .sn{color:var(--high)}
   /* form */
   label{display:block;font-weight:700;font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;color:var(--green);margin:14px 0 5px}
   input[type=text],input[type=password],textarea,select{width:100%;padding:10px 12px;background:#000;color:var(--fg);border:1px solid var(--bd);border-radius:8px;font-size:.9rem;font-family:inherit}
@@ -110,6 +120,10 @@
           <div class="card"><h3>Severity breakdown</h3><div class="bars" id="bars"></div></div>
           <div class="card"><h3>Run status</h3><div id="ptable"><div class="empty">Run a scan to see phase results.</div></div>
             <a id="reportLink" class="report hide" target="_blank" style="margin-top:14px">Open full report ↗</a></div>
+        </div>
+        <div class="card" style="margin-top:4px">
+          <h3>Attack path · MITRE ATT&CK</h3>
+          <div id="attackPath"><div class="empty">Run a scan to map the kill chain.</div></div>
         </div>
         <div class="card" style="margin-top:4px">
           <h3>Findings</h3>
@@ -243,13 +257,23 @@ async function loadFindings(id){
   document.getElementById('kSecrets').textContent=d.secrets||0;
   document.getElementById('kCrit').textContent=(d.counts.critical||0)+(d.counts.high||0);
   renderBars(d.counts);
+  renderAttackPath(d.attack_path);
   const el=document.getElementById('findings');
   if(!d.findings.length){el.innerHTML='<div class="empty">No findings in this scan.</div>';return;}
-  el.innerHTML='<table class="dt"><thead><tr><th>Finding</th><th>Category</th><th>Affected URL</th><th>Severity</th><th>CWE</th></tr></thead><tbody>'+
+  el.innerHTML='<table class="dt"><thead><tr><th>Finding</th><th>Category</th><th>Affected URL</th><th>ATT&CK</th><th>Severity</th><th>CWE</th></tr></thead><tbody>'+
     d.findings.map(f=>`<tr><td>${f.title}</td><td>${f.category||f.source}</td>
       <td class="mono" style="color:var(--mut);font-size:.76rem">${f.url||'—'}</td>
+      <td><span class="ttag">${f.attack||'—'}</span></td>
       <td><span class="badge b-${f.severity}">${f.severity}</span></td><td>${f.cwe||'—'}</td></tr>`).join('')+
     '</tbody></table>';
+}
+const TACTICS=["Reconnaissance","Initial Access","Execution","Credential Access","Privilege Escalation","Impact"];
+function renderAttackPath(ap){
+  const el=document.getElementById('attackPath');if(!el)return;
+  if(!ap){el.innerHTML='<div class="empty">No attack path.</div>';return;}
+  const chain=TACTICS.map(t=>{const n=(ap.tactics&&ap.tactics[t])||0;
+    return `<div class="stage ${n?'hit':'miss'}"><div class="st">${t}</div><div class="sn">${n}</div></div>`;}).join('');
+  el.innerHTML=`<div class="narr">▶ ${ap.narrative||''}</div><div class="chain">${chain}</div>`;
 }
 async function poll(id){
   const s=await (await fetch('/status/'+id)).json();

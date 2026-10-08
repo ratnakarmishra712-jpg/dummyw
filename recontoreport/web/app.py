@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 
 from flask import Flask, jsonify, request, send_file
 
+from ..attack import attack_for, build_attack_path
 from ..config import (
     AuthRole,
     Config,
@@ -251,14 +252,22 @@ def create_app() -> Flask:
             for r in rows:
                 sev = r["severity"] or "info"
                 counts[sev] = counts.get(sev, 0) + 1
+                tid, tname, tactic = attack_for(r["cwe_id"], r["tool_source"])
                 out.append({"title": r["title"], "severity": sev, "cwe": r["cwe_id"] or "",
                             "category": r["owasp_category"] or "", "source": r["tool_source"] or "",
-                            "url": r["url"] or ""})
+                            "url": r["url"] or "", "attack": f"{tid} {tname}", "tactic": tactic})
             assets = con.execute("SELECT count(*) FROM assets").fetchone()[0]
             secrets = con.execute("SELECT count(*) FROM secret_matches").fetchone()[0]
         finally:
             con.close()
-        return jsonify({"findings": out, "counts": counts, "assets": assets, "secrets": secrets})
+        path = build_attack_path(
+            [{"cwe_id": f["cwe"], "tool_source": f["source"], "title": f["title"],
+              "severity": f["severity"]} for f in out]
+        )
+        attack_path = {"reached": path["reached"], "narrative": path["narrative"],
+                       "tactics": {t: len(v) for t, v in path["by_tactic"].items()}}
+        return jsonify({"findings": out, "counts": counts, "assets": assets,
+                        "secrets": secrets, "attack_path": attack_path})
 
     def _serve_disk_report(run_id):
         safe = "".join(c for c in run_id if c.isalnum() or c in "-_")
