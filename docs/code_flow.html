@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Call Flow (URL → Report)</title>
+<style>
+  :root{--bg:#0a0a0c;--panel:#121216;--panel2:#17171c;--fg:#f1f1f3;--mut:#8a8a93;--bd:#262630;
+    --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;--purple:#b14cff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"Helvetica Neue",Arial,sans-serif;font-size:14px;
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .wrap{max-width:1040px;margin:0 auto;padding:30px 22px 80px}
+  h1{font-size:1.6rem;font-weight:900;letter-spacing:-.02em;margin:0 0 2px}
+  .sub{color:var(--mut);font-size:.85rem;margin-bottom:8px}
+  .legend{color:var(--mut);font-size:.74rem;margin-bottom:20px}
+  .legend code{color:var(--green)}
+  .step{display:grid;grid-template-columns:40px 1fr;gap:14px;margin:0}
+  .rail{display:flex;flex-direction:column;align-items:center}
+  .num{width:30px;height:30px;border-radius:50%;background:var(--panel2);border:1px solid var(--bd);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;flex-shrink:0}
+  .line{width:2px;flex:1;background:var(--bd);margin:3px 0}
+  .card{background:var(--panel);border:1px solid var(--bd);border-radius:11px;padding:12px 15px;margin-bottom:12px}
+  .file{font-size:.68rem;color:var(--green)} .file b{color:#aef0c6}
+  .fn{font-weight:800;font-size:.95rem;margin:2px 0 5px}
+  .fn span{color:var(--blue)}
+  .d{font-size:.84rem;color:#d6d6da;line-height:1.5}
+  .d code{background:var(--panel2);border:1px solid var(--bd);border-radius:4px;padding:1px 6px;font-size:.78rem;color:#cfcfd6}
+  .tag{display:inline-block;font-size:.6rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle}
+  .t-entry{background:var(--blue);color:#000}.t-core{background:var(--green);color:#000}
+  .t-phase{background:var(--yellow);color:#000}.t-tool{background:var(--purple);color:#fff}
+  .t-store{background:#2b2b31;color:#cfcfd6;border:1px solid var(--bd)}.t-out{background:var(--red);color:#fff}
+  .writes{font-size:.72rem;color:var(--green);margin-top:5px}
+  .branch{border-left:2px dashed var(--bd);margin:2px 0 10px 14px;padding-left:16px}
+  .mini{font-size:.8rem;color:#cfcfd6;margin:5px 0;line-height:1.45}
+  .mini b{color:#fff}.mini .f{color:var(--green);font-size:.68rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Call Flow — what runs when you enter a URL</h1>
+  <div class="sub mono">r2r run --url &lt;site&gt; --phases all --i-have-authorization   (CLI path; web UI noted at step 1)</div>
+  <div class="legend">Each step = <b>file</b> · <code>function()</code>. Tags:
+    <span class="tag t-entry">entry</span><span class="tag t-core">core</span>
+    <span class="tag t-phase">phase</span><span class="tag t-tool">tool</span>
+    <span class="tag t-store">store</span><span class="tag t-out">output</span></div>
+
+  <!-- 1 -->
+  <div class="step"><div class="rail"><div class="num">1</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/cli.py</b></div>
+      <div class="fn"><span>run()</span> <span class="tag t-entry">entry</span></div>
+      <div class="d">Click parses your flags. If <code>--url</code> only → <code>Config.from_url()</code>; if <code>--config</code> → <code>Config.load()</code>
+        (<b>config.py</b>). <code>normalize_url()</code> adds <code>http://</code> if missing and seeds the scope.
+        <br><i>Web UI equivalent:</i> <b>web/app.py</b> <code>scan()</code> → <code>_run_scan()</code> → <code>_build_config()</code> (same Config object).</div>
+    </div></div>
+
+  <!-- 2 -->
+  <div class="step"><div class="rail"><div class="num">2</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/orchestrator.py</b> &amp; <b>phases/__init__.py</b></div>
+      <div class="fn"><span>parse_phase_arg()</span> → <span>resolve_phases()</span> <span class="tag t-core">core</span></div>
+      <div class="d"><code>parse_phase_arg("all")</code> → <code>[1,2,3,4,5]</code>. <code>resolve_phases()</code> expands dependencies
+        (e.g. <code>[4]</code> → <code>[1,3,4]</code>) by reading each phase class's <code>depends_on</code>.</div>
+    </div></div>
+
+  <!-- 3 -->
+  <div class="step"><div class="rail"><div class="num">3</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/orchestrator.py</b></div>
+      <div class="fn"><span>Orchestrator.__init__()</span> → <span>run()</span> <span class="tag t-core">core</span></div>
+      <div class="d"><code>__init__</code> builds the DB engine + session factory (<b>db.py</b>), creates tables.
+        <code>run()</code> calls <code>_get_or_create_target()</code> → inserts the <code>targets</code> row and sets status <code>running</code>.</div>
+      <div class="writes">writes → targets</div>
+    </div></div>
+
+  <!-- 4 -->
+  <div class="step"><div class="rail"><div class="num">4</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/orchestrator.py</b></div>
+      <div class="fn">loop in <span>run()</span> → <span>_run_phase_with_retries()</span> <span class="tag t-core">core</span></div>
+      <div class="d">For each phase number: build a <code>PhaseContext</code> (config, target_id, session_factory, logger).
+        <b>Authorization gate:</b> if the phase is <code>active</code> and you didn't pass authorization → skip. Otherwise call
+        <code>phase.run()</code> inside try/except so one failure can't kill the run.</div>
+    </div></div>
+
+  <!-- 5 : phase 1 expanded -->
+  <div class="step"><div class="rail"><div class="num">5</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/phases/phase1_recon.py</b></div>
+      <div class="fn"><span>ReconPhase.run()</span> <span class="tag t-phase">phase 1 · recon</span></div>
+      <div class="d">Calls three sub-steps:</div>
+      <div class="branch">
+        <div class="mini"><b>_run_subfinder()</b> <span class="f">→ tools/runner.py run()</span> — enumerates subdomains of <code>_registrable_domain()</code>, <code>_parse_subfinder_line()</code> → <code>_store_asset()</code>.</div>
+        <div class="mini"><b>_run_crawler()</b> <span class="f">→ tools/crawler.py crawl() + parse_html()</span> — BFS fetches pages; each page stored as a transaction, each link/form/param as an asset.</div>
+        <div class="mini"><b>_run_ffuf()</b> <span class="f">→ tools/runner.py run()</span> — optional wordlist brute-force; sensitive hits also create a finding.</div>
+      </div>
+      <div class="writes">writes → assets · http_transactions · findings</div>
+    </div></div>
+
+  <!-- 6 -->
+  <div class="step"><div class="rail"><div class="num">6</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>phase2_traffic.py · phase3_scan.py · phase4_exploit.py · phase5_harvest.py</b></div>
+      <div class="fn">each <span>Phase.run()</span> <span class="tag t-phase">phases 2–5</span></div>
+      <div class="branch">
+        <div class="mini"><b>P2 TrafficPhase.run()</b> <span class="f">→ tools/mitm_addon.py + capture.py, Playwright</span> — logs traffic + captures logins. <span class="writes">→ http_transactions · auth_contexts</span></div>
+        <div class="mini"><b>P3 ScanPhase.run()</b> <span class="f">→ _run_nuclei() / _run_xss_canary() / _run_privesc_diff()</span> — reads assets + auth_contexts + transactions. <span class="writes">→ findings</span></div>
+        <div class="mini"><b>P4 ExploitPhase.run()</b> <span class="f">→ tools/jwt_analysis.py, sqlmap</span> — reads transactions + param assets. <span class="writes">→ findings</span></div>
+        <div class="mini"><b>P5 HarvestPhase.run()</b> <span class="f">→ tools/secrets.py scan_text()</span> — reads transactions (offline). <span class="writes">→ secret_matches</span></div>
+      </div>
+    </div></div>
+
+  <!-- 7 -->
+  <div class="step"><div class="rail"><div class="num">7</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/tools/runner.py</b> (every external tool goes through here)</div>
+      <div class="fn"><span>run()</span> / <span>ensure_available()</span> <span class="tag t-tool">tool</span></div>
+      <div class="d">Single safe subprocess wrapper: no shell, captures stdout/stderr, enforces a timeout. subfinder, ffuf, nuclei, sqlmap, mitmdump all launch here. Phase code then parses the output and normalizes it.</div>
+    </div></div>
+
+  <!-- 8 -->
+  <div class="step"><div class="rail"><div class="num">8</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/models.py</b> + <b>db.py</b> (SQLite via SQLAlchemy)</div>
+      <div class="fn"><span>session_scope()</span> → ORM writes/reads <span class="tag t-store">shared store</span></div>
+      <div class="d">Every phase reads and writes the 8 tables through <code>session_scope()</code>. This is where tools "meet":
+        P1 writes a page body, P5 later reads it; P2 writes two identities, P3 replays and diffs them.</div>
+    </div></div>
+
+  <!-- 9 -->
+  <div class="step"><div class="rail"><div class="num">9</div><div class="line"></div></div>
+    <div class="card"><div class="file"><b>recontoreport/orchestrator.py</b> → <b>cli.py</b> / <b>web/app.py</b></div>
+      <div class="fn">back in <span>run()</span> → status set, results returned <span class="tag t-core">core</span></div>
+      <div class="d">Target status set to <code>completed</code>/<code>failed</code>; a list of <code>PhaseResult</code> is returned and printed as the phase table.</div>
+    </div></div>
+
+  <!-- 10 -->
+  <div class="step"><div class="rail"><div class="num">10</div></div>
+    <div class="card"><div class="file"><b>recontoreport/report/generator.py</b> + <b>templates/report.html.j2</b></div>
+      <div class="fn"><span>generate_reports()</span> → <span>_collect()</span> <span class="tag t-out">output</span></div>
+      <div class="d"><code>_collect()</code> reads targets/findings/assets/secret_matches, groups findings by severity;
+        Jinja2 renders the HTML (CVSS/impact added from template lookups). A <code>reports</code> row is written and the
+        file path returned. CLI prints it; the UI serves it at <code>/report/&lt;run_id&gt;</code>.</div>
+      <div class="writes">reads → targets · findings · assets · secret_matches &nbsp;|&nbsp; writes → reports + report-*.html</div>
+    </div></div>
+
+</div>
+</body>
+</html>
