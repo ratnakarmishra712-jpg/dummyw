@@ -119,7 +119,6 @@ class TrafficPhase(Phase):
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
                 headless=True,
-                proxy={"server": self._proxy_url()},
             )
             # ignore_https_errors lets us MITM TLS without installing mitmproxy's CA.
             context = browser.new_context(ignore_https_errors=True)
@@ -251,31 +250,22 @@ class TrafficPhase(Phase):
             self.log.info("traffic: created auth context '%s' from cookie", role.name)
 
         if not login_roles:
-            # All roles were cookie-based — done, no proxy/browser required.
+            # All roles were cookie-based — done, no browser required.
             return self._result(ok=True, errors=[])
-
-        try:
-            ensure_available(self.config.tool("mitmproxy"))
-        except Exception as exc:
-            errors.append(str(exc))
-            return self._result(ok=contexts_created > 0, errors=errors)
 
         before = self._tx_count()
 
         for role in login_roles:
-            proc = None
             try:
-                ac_id = self._create_pending_auth_context(role)
-                proc = self._start_proxy(auth_context_id=ac_id)
+                self._create_pending_auth_context(role)
+                self.log.info("logging in as '%s' via Playwright…", role.name)
                 state = self._login_and_capture_state(role)
                 self._persist_auth_context(role, state)
                 contexts_created += 1
-                self.log.info("captured auth context '%s'", role.name)
+                self.log.info("captured auth context '%s' (%d cookies)",
+                              role.name, len(state.get("cookies") or []))
             except Exception as exc:
                 errors.append(f"auth role '{role.name}': {type(exc).__name__}: {exc}")
-            finally:
-                if proc is not None:
-                    self._stop_proxy(proc)
 
         captured = self._tx_count() - before
         ok = not errors or captured > 0 or contexts_created > 0
