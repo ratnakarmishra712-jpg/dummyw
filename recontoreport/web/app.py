@@ -260,13 +260,6 @@ def create_app() -> Flask:
                             "url": r["url"] or "", "attack": f"{tid} {tname}", "tactic": tactic})
             assets = con.execute("SELECT count(*) FROM assets").fetchone()[0]
             secrets = con.execute("SELECT count(*) FROM secret_matches").fetchone()[0]
-            # Blast-radius nodes: sample of assets, flagged if a finding hits them.
-            hit_urls = {f["url"] for f in out if f["url"]}
-            arows = con.execute("SELECT type,url FROM assets LIMIT 60").fetchall()
-            blast = [{"type": a["type"],
-                      "url": a["url"],
-                      "hit": any(a["url"] and a["url"] in h or (h and h in a["url"]) for h in hit_urls)}
-                     for a in arows]
         finally:
             con.close()
         plain = [{"cwe_id": f["cwe"], "tool_source": f["source"], "title": f["title"],
@@ -277,8 +270,7 @@ def create_app() -> Flask:
         return jsonify({"findings": out, "counts": counts, "assets": assets,
                         "secrets": secrets, "attack_path": attack_path,
                         "grade": security_grade(counts),
-                        "story": attacker_story(plain),
-                        "blast": blast})
+                        "story": attacker_story(plain)})
 
     def _run_findings(run_id):
         """(target_url, [findings]) for a run, read from its DB. [] if none."""

@@ -60,6 +60,10 @@ def _classify(cwe: str, src: str) -> tuple[str, str]:
         return "T1550.001", "Credential Access"
     if cwe == "CWE-538" or "secret" in src or "ffuf" in src:
         return "T1552", "Credential Access"
+    if cwe == "CWE-22" or "traversal" in src or "lfi" in src:
+        return "T1083", "Credential Access"
+    if cwe == "CWE-601" or "redirect" in src:
+        return "T1566", "Initial Access"
     if "nuclei" in src:
         return "T1190", "Initial Access"
     return "T1595", "Reconnaissance"

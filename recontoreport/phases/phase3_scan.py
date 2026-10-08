@@ -263,6 +263,66 @@ class ScanPhase(Phase):
         self.log.info("privesc: %s findings", created)
         return created
 
+    # -- security header / CORS misconfiguration audit -----------------------
+    def _run_header_audit(self, errors: list[str]) -> int:
+        """Fetch the target once and flag missing security headers / weak CORS."""
+        url = self.config.target_url
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "ReconToReport/0.1"})
+            with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310
+                headers = {k.lower(): v for k, v in r.headers.items()}
+        except urllib.error.HTTPError as e:  # type: ignore[attr-defined]
+            headers = {k.lower(): v for k, v in (e.headers or {}).items()}
+        except Exception as exc:
+            self.log.info("headers: could not fetch %s (%s)", url, exc)
+            return 0
+
+        created = 0
+        checks = [
+            ("strict-transport-security", "Strict-Transport-Security (HSTS)"),
+            ("content-security-policy", "Content-Security-Policy"),
+            ("x-frame-options", "X-Frame-Options (clickjacking defence)"),
+            ("x-content-type-options", "X-Content-Type-Options"),
+        ]
+        missing = [label for h, label in checks if h not in headers]
+        if missing:
+            with session_scope(self.ctx.session_factory) as s:
+                s.add(Finding(
+                    target_id=self.ctx.target_id,
+                    title=f"Missing security headers ({len(missing)})",
+                    cwe_id="CWE-693",
+                    owasp_category="A05:2021 Security Misconfiguration",
+                    severity=Severity.LOW.value,
+                    confidence=Confidence.FIRM.value,
+                    description="The response is missing: " + "; ".join(missing)
+                    + ". These harden the app against downgrade, injection and clickjacking attacks.",
+                    tool_source="header-audit",
+                    poc_steps=f"GET {url} -> response omits: {', '.join(missing)}",
+                    remediation="Set the missing headers at the web server / app layer.",
+                    status=FindingStatus.OPEN.value,
+                ))
+            created += 1
+        if headers.get("access-control-allow-origin") == "*":
+            with session_scope(self.ctx.session_factory) as s:
+                s.add(Finding(
+                    target_id=self.ctx.target_id,
+                    title="Permissive CORS policy (Access-Control-Allow-Origin: *)",
+                    cwe_id="CWE-942",
+                    owasp_category="A05:2021 Security Misconfiguration",
+                    severity=Severity.MEDIUM.value,
+                    confidence=Confidence.FIRM.value,
+                    description="The app allows any origin to read its responses, which can "
+                                "leak authenticated data to attacker-controlled sites.",
+                    tool_source="header-audit",
+                    poc_steps=f"GET {url} -> Access-Control-Allow-Origin: *",
+                    remediation="Restrict CORS to an explicit allow-list of trusted origins; "
+                                "never combine a wildcard origin with credentials.",
+                    status=FindingStatus.OPEN.value,
+                ))
+            created += 1
+        self.log.info("headers: %s findings", created)
+        return created
+
     # -- reflected / DOM XSS canary ------------------------------------------
     def _run_xss_canary(self, errors: list[str]) -> int:
         try:
@@ -338,6 +398,10 @@ class ScanPhase(Phase):
         errors: list[str] = []
         findings = 0
         findings += self._run_nuclei(errors)
+        try:
+            findings += self._run_header_audit(errors)
+        except Exception as exc:
+            errors.append(f"headers: {type(exc).__name__}: {exc}")
         try:
             findings += self._run_privesc_diff(errors)
         except Exception as exc:
