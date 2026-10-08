@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Presentation Script</title>
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#121216; --panel2:#17171c; --fg:#f1f1f3; --mut:#8a8a93; --bd:#262630;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff; --purple:#b14cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .page{width:900px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px;
+    padding:38px 44px 30px}
+  .brand{font-size:.85rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--green)}
+  .kicker{font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;color:var(--green);margin-top:4px}
+  h1{font-size:1.7rem;font-weight:900;letter-spacing:-.02em;margin:10px 0 2px}
+  .lede{color:var(--mut);font-size:.9rem;margin-bottom:6px}
+  /* beat block */
+  .beat{border:1px solid var(--bd);border-radius:14px;padding:4px 22px 16px;margin:20px 0;background:var(--panel);position:relative}
+  .beat .tab{display:inline-flex;align-items:center;gap:9px;margin:-14px 0 10px;background:var(--panel2);
+    border:1px solid var(--bd);border-radius:999px;padding:6px 14px;font-size:.72rem;font-weight:800;letter-spacing:.04em}
+  .beat .tab .dot{width:9px;height:9px;border-radius:50%}
+  .beat .tab .ph{color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-size:.62rem}
+  .b1 .dot{background:var(--green)}.b2 .dot{background:var(--blue)}.b3 .dot{background:var(--yellow)}
+  .b4 .dot{background:var(--red)}.b5 .dot{background:var(--purple)}
+  .say{font-size:1.02rem;line-height:1.62;color:#ececf0;margin:0}
+  .say i{color:#fff;font-style:italic}
+  .dir{display:block;color:var(--green);font-size:.74rem;font-weight:700;letter-spacing:.05em;margin:0 0 10px;text-transform:uppercase}
+  .open,.close{border:1px solid var(--green);border-radius:14px;padding:20px 22px;margin:18px 0;background:var(--panel)}
+  .open .say,.close .say{font-size:1.06rem}
+  .close .punch{color:var(--green);font-weight:800}
+  h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--green);margin:30px 0 12px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:15px;height:2px;background:var(--green)}
+  .flex{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .fcard{border:1px solid var(--bd);border-radius:12px;padding:14px 16px;background:var(--panel)}
+  .fcard h3{margin:0 0 6px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--yellow)}
+  .fcard p{margin:0;font-size:.86rem;line-height:1.5;color:#dcdce0}
+  .cut{border:1px dashed var(--yellow);border-radius:12px;padding:16px 18px;background:#0d0d10;margin-top:14px}
+  .cut .say{font-size:.95rem}
+  footer{margin-top:26px;color:var(--mut);font-size:.68rem;border-top:1px solid var(--bd);padding-top:12px;text-align:center}
+  @media print{html,body{background:#fff}.page{border:none;margin:0;background:#fff;color:#111}
+    .say,.fcard p{color:#1a1a1a}.beat,.open,.close,.fcard,.cut{background:#fff}}
+  @media(max-width:640px){.flex{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">RECON<b>//</b>REPORT</div>
+  <div class="kicker">Presentation script · say it out loud · [brackets] = stage direction, not spoken</div>
+  <h1>The walkthrough</h1>
+  <div class="lede">One story, start to finish. Privesc is one beat of five — the whole pipeline carries the pitch.</div>
+
+  <!-- OPEN -->
+  <div class="open">
+    <span class="dir">▸ Open — don't touch the keyboard yet</span>
+    <p class="say">"Quick question before I start — how do you normally find out if a website is secure?
+    Most tools act like a <i>home inspector</i>: they walk around, rattle the doors, and hand you a
+    checklist of weak spots. Useful, but it's just a list.<br><br>
+    ReconToReport works more like a <i>burglar</i>. You give it one thing — a web address — and it does
+    what a real attacker would actually do, in order: it scouts the place, finds a way in, tries to get
+    further than it should, proves what it could steal, and then writes the whole thing up as a report.
+    Automatically.<br><br>
+    Let me walk you through how it thinks — because the <i>order</i> is the whole point."</p>
+  </div>
+
+  <!-- BEAT 1 -->
+  <div class="beat b1">
+    <span class="tab"><span class="dot"></span>Beat 1 — "First, it scouts."<span class="ph">Recon</span></span>
+    <p class="say">"It starts exactly where an attacker starts — mapping the target. It quietly looks up
+    other addresses the company owns, without ever touching their servers — just public records. Then it
+    crawls the actual site like a browser, noting every page, every form, every place you can type
+    something in. And it hunts for the stuff nobody meant to leave lying around — forgotten backup files,
+    admin pages that aren't linked anywhere. By the end it has a <i>map</i> — the same one a burglar sketches
+    before going in."</p>
+  </div>
+
+  <!-- BEAT 2 -->
+  <div class="beat b2">
+    <span class="tab"><span class="dot"></span>Beat 2 — "Then it becomes a user."<span class="ph">Access</span></span>
+    <p class="say">"Here's where it stops being a scanner. Most tools test a site logged-out, as a stranger.
+    But real attacks happen from <i>inside</i> — as someone with an account. And a normal account is the
+    easiest thing in the world to get: on most sites you just <i>sign up</i> for one.<br><br>
+    So the tool logs in the way a real person would, and holds that session — it's now browsing as an
+    actual user, not an anonymous outsider. That one shift is what unlocks everything after it."</p>
+  </div>
+
+  <!-- BEAT 3 -->
+  <div class="beat b3">
+    <span class="tab"><span class="dot"></span>Beat 3 — "Now it looks for the ways in."<span class="ph">Scan</span></span>
+    <p class="say">"With that map and that login, it goes hunting for weaknesses. Some of this is the standard
+    sweep every scanner does — checking for known, publicly-documented flaws — and we do that too, so we're
+    never <i>behind</i> an ordinary scanner.<br><br>
+    But then it does something a scanner can't. Because it's logged in as a user, it can ask: <i>is there
+    anything this ordinary account can reach that it shouldn't?</i> — like a regular customer opening the
+    staff-only admin area. If a nobody-account can walk into a restricted room, that's serious, and the tool
+    proves it rather than guessing.<br><br>
+    It also checks for the classic 'inject code into the page' attacks — but instead of guessing, it loads
+    the page in a real browser and watches whether the attack actually <i>fires</i>. Confirmed, not assumed."</p>
+  </div>
+
+  <!-- BEAT 4 -->
+  <div class="beat b4">
+    <span class="tab"><span class="dot"></span>Beat 4 — "Then it proves impact."<span class="ph">Exploit</span></span>
+    <p class="say">"Finding a weakness is one thing; showing it's real is another. So it safely confirms the
+    big ones. It checks whether the login tokens the site hands out can be forged — because a forgeable
+    token means impersonating anyone. And it probes the input fields for database injection — the classic
+    'type a quote and watch the database spill an error' — which is how real breaches start. Where it finds
+    one, it records a concrete, repeatable proof."</p>
+  </div>
+
+  <!-- BEAT 5 -->
+  <div class="beat b5">
+    <span class="tab"><span class="dot"></span>Beat 5 — "Finally, it collects and writes it up."<span class="ph">Harvest + Report</span></span>
+    <p class="say">"Everything an attacker would grab on the way out — exposed passwords, API keys, anything
+    sensitive that leaked into the traffic — it gathers into one place. Then it does the part humans hate
+    most: it writes the report. Every finding ranked by danger, with the business impact and exactly how to
+    fix it. Client-ready — from that one web address you started with."</p>
+  </div>
+
+  <!-- CLOSE -->
+  <div class="close">
+    <span class="dir">▸ Close — the real point</span>
+    <p class="say">"Now — here's what makes this different from pointing five separate tools at a site.
+    Every step writes into <span class="punch">one shared memory</span>. The login from step two gets
+    <i>used</i> by the test in step three. The pages mapped in step one are what step four attacks. The
+    traffic captured along the way is what gets mined at the end.<br><br>
+    A bag of tools runs each check in isolation and hands you five disconnected lists. We run them
+    <span class="punch">in attacker order, feeding each other</span> — so instead of 'here are five
+    problems,' you get 'here's how someone chains them into an actual break-in.'<br><br>
+    And to be straight: this covers the scouting-to-access part of an attack — the part you <i>can</i>
+    automate. It won't replace a human for business-logic flaws, and some findings still want a person to
+    confirm. But for turning one URL into a real, prioritized picture of your risk, in minutes — that's
+    what it does."</p>
+  </div>
+
+  <!-- FLEX -->
+  <h2>How to flex it</h2>
+  <div class="flex">
+    <div class="fcard"><h3>Stall / walk-by</h3><p>Open + the "one shared memory" line from the close. 30 seconds, done.</p></div>
+    <div class="fcard"><h3>Full walk-up</h3><p>Open → the five beats, one each → close. ~3–4 min.</p></div>
+    <div class="fcard"><h3>Live demo</h3><p>Say each beat <i>as that phase runs</i> on screen. The live log paces you.</p></div>
+    <div class="fcard"><h3>If they're technical</h3><p>Linger on Beat 3 (the logged-in access-control check) and the close's chaining point.</p></div>
+  </div>
+
+  <div class="cut">
+    <span class="dir">▸ The 60-second cut (memorize this)</span>
+    <p class="say">"Most security tools are a home inspector — they hand you a checklist. Ours is a burglar:
+    give it a web address and it scouts the site, logs in like a normal user, finds what that user can
+    reach but shouldn't, proves what it could steal, and writes the report — automatically. The trick is
+    it runs every step in <i>attacker order</i>, each one feeding the next off one shared memory, so you
+    don't get five disconnected problems — you get the actual chain of a break-in."</p>
+  </div>
+
+  <footer>ReconToReport · presentation script · pair with stall_kit.html · pitch.html · poster.html · STUDY_GUIDE.md</footer>
+</div>
+</body>
+</html>
