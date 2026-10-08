@@ -251,12 +251,64 @@ tags, or add a custom Python check in a phase for logic nuclei can't express.
 
 ---
 
+## 8.5 The red-team angle — how to set this apart from a plain scanner
+
+Another team is building "the same project." The way you win the room is to stop
+describing ReconToReport as a *vulnerability scanner* and start describing it as a
+small **adversary-emulation pipeline**. This is not spin — it is a more accurate
+description of what the code already does. A scanner answers *"what is broken?"*.
+An adversary emulator answers *"what could an attacker actually chain together,
+end to end?"* Our architecture answers the second question; a bag of independent
+tools cannot.
+
+**The one sentence:** *"We don't just list findings — we reproduce the attacker's
+workflow: discover the surface, operate as real authenticated identities, and
+prove that one weakness leads to the next, all off a single shared evidence store."*
+
+Three differentiators you can defend with the actual code:
+
+1. **Chaining, not scanning (the shared store).** Each phase reads what the
+   previous phase wrote. Recon (P1) populates `assets`; P2 establishes
+   `auth_contexts` (real sessions); P3/P4 attack *those specific assets as those
+   specific identities*. A classic scanner fires templates at a URL in isolation.
+   We model the kill-chain order — **recon → authenticated access → privilege
+   escalation → reportable impact** — and the data model is what makes the chain
+   possible. *This is the novelty slide, reframed as tradecraft.*
+
+2. **Operating as an identity, not an anonymous prober (`auth_contexts`).** A real
+   red-teamer rarely tests logged-out. P2 captures/loads named sessions with a
+   `privilege_level`; P3 then *replays a privileged user's own requests using a
+   lower-privileged user's cookies.* That is exactly how an operator tests for
+   broken access control by hand — we automated it. No anonymous scanner can do
+   this, because it has no concept of "who am I right now."
+
+3. **Proving impact, not flagging patterns (`_run_privesc_diff`).** The flagship
+   finding is a *differential* result: anonymous denied, high-priv allowed,
+   low-priv **also** allowed → broken access control with a concrete two-line PoC.
+   That is an attacker demonstrating escalation, not a signature match. It is
+   only expressible because three facts from three different steps live in one
+   joinable store.
+
+**If asked "is this really red-team?":** Be honest and precise. "It automates the
+*reconnaissance-to-access-to-escalation* workflow and produces operator evidence.
+It does not do C2, lateral movement, or evasion — it is pre-exploitation adversary
+emulation for web apps. Framing it that way is accurate, and it's the part of a
+red-team engagement that is most mechanisable." Honesty here reads as competence.
+
+**Roadmap line (say "planned", never "done"):** mapping each finding to a MITRE
+ATT&CK technique and rendering the achieved tactics as a kill-chain strip is the
+natural next step — the phase structure already lines up with ATT&CK tactics, so
+it's a presentation layer over data we already collect. *Do not claim it ships
+today; claiming features you can't open in the editor is how you lose a viva.*
+
+---
+
 ## 9. 5-minute cram (if you only have minutes before)
 
-1. **Hook:** "Ten tools + manual report → one automated pipeline from a URL."
-2. **Novelty:** shared database lets tools use each other's findings.
+1. **Hook:** "Not a scanner — a small adversary-emulation pipeline: recon → authenticated access → privilege escalation → report, from one URL."
+2. **Novelty:** shared database lets each step attack what the last step found, as a real identity — that's the chain, and a bag of tools can't do it.
 3. **Flow:** input → config → orchestrator → 5 phases (read/write shared DB) → report.
-4. **Flagship finding:** broken access control via replaying admin requests as a normal user — impossible without the shared store.
+4. **Flagship finding:** broken access control by replaying an admin's own requests as a normal user — attacker proving escalation, impossible without the shared store.
 5. **Proof:** 20 real XSS on Google Firing Range, auto-reported.
 6. **Honesty:** finds common/known patterns, not business logic; some findings need manual confirmation.
 

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Why Ours Is Different</title>
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#121216; --panel2:#17171c; --fg:#f1f1f3; --mut:#8a8a93; --bd:#262630;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff; --purple:#b14cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .page{width:960px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px;
+    padding:38px 42px 30px}
+  .hdr{border-bottom:2px solid var(--green);padding-bottom:16px}
+  .brand{font-size:.9rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--green)}
+  h1{font-size:2.5rem;line-height:1;font-weight:900;letter-spacing:-.03em;margin:10px 0 8px}
+  h1 em{color:var(--green);font-style:normal}
+  .tag{font-size:1.02rem;color:#eaeaee;max-width:760px;line-height:1.45}
+  .tag b{color:var(--green)}
+  h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--green);margin:26px 0 12px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:15px;height:2px;background:var(--green)}
+  p{margin:0 0 10px;line-height:1.5;font-size:.92rem;color:#dcdce0}
+  /* the one line */
+  .oneline{background:var(--panel);border:1px solid var(--green);border-radius:12px;padding:18px 20px;margin:18px 0 4px;font-size:1.05rem;line-height:1.5}
+  .oneline .q{color:var(--green);font-weight:800}
+  /* kill chain */
+  .chain{display:flex;align-items:stretch;gap:0;margin:6px 0 2px}
+  .stage{flex:1;background:var(--panel2);border:1px solid var(--bd);border-radius:9px;padding:11px 9px;text-align:center}
+  .stage .n{font-size:.56rem;color:var(--mut);letter-spacing:.1em}
+  .stage .t{font-weight:800;font-size:.84rem;margin:4px 0 2px}
+  .stage .d{font-size:.62rem;color:var(--mut);line-height:1.3}
+  .arrow{display:flex;align-items:center;color:var(--green);font-weight:900;padding:0 5px}
+  .s1{box-shadow:inset 0 3px 0 var(--green)}.s2{box-shadow:inset 0 3px 0 var(--blue)}
+  .s3{box-shadow:inset 0 3px 0 var(--yellow)}.s4{box-shadow:inset 0 3px 0 var(--red)}.s5{box-shadow:inset 0 3px 0 var(--purple)}
+  /* versus */
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  .vcard{border:1px solid var(--bd);border-radius:12px;padding:16px 18px;background:var(--panel)}
+  .vcard.us{border-color:var(--green)}
+  .vcard h3{margin:0 0 10px;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em}
+  .vcard.them h3{color:var(--mut)}.vcard.us h3{color:var(--green)}
+  .vcard ul{margin:0;padding-left:18px}.vcard li{font-size:.85rem;line-height:1.45;margin-bottom:7px;color:#dcdce0}
+  .vcard.them li{color:var(--mut)}
+  .vcard li b{color:#fff}
+  /* differentiators */
+  .diffs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .diff{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:16px 16px}
+  .diff .num{font-size:1.6rem;font-weight:900;color:var(--green);line-height:1}
+  .diff h4{margin:8px 0 6px;font-size:.92rem}
+  .diff p{font-size:.8rem;margin:0;color:#c9c9d0}
+  .diff .code{display:block;margin-top:8px;font-size:.68rem;color:var(--blue)}
+  /* honesty */
+  .honest{background:#000;border:1px solid var(--yellow);border-radius:12px;padding:14px 18px}
+  .honest p{font-size:.86rem;color:#e6e0c8;margin:0}
+  .honest b{color:var(--yellow)}
+  footer{margin-top:24px;color:var(--mut);font-size:.68rem;border-top:1px solid var(--bd);padding-top:12px;display:flex;justify-content:space-between}
+  @media print{html,body{background:#fff}.page{border:none;margin:0;background:#fff;color:#111}
+    p,.tag,.diff p{color:#222}.vcard li{color:#222}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hdr">
+    <div class="brand">RECON<b>//</b>REPORT</div>
+    <h1>Not a scanner.<br>An <em>adversary-emulation</em> pipeline.</h1>
+    <div class="tag">Most teams point a vulnerability scanner at a URL and hand over a list.
+      We reproduce the attacker's actual workflow — <b>discover the surface, operate as real
+      authenticated identities, and prove that one weakness leads to the next</b> — all off a
+      single shared evidence store, from one command.</div>
+  </div>
+
+  <div class="oneline">
+    <span class="q">&ldquo;</span>A scanner answers <i>what is broken?</i> &nbsp;We answer
+    <i>what could an attacker actually chain together, end to end?</i><span class="q">&rdquo;</span>
+  </div>
+
+  <h2>The workflow we automate</h2>
+  <div class="chain">
+    <div class="stage s1"><div class="n">PHASE 1</div><div class="t">Recon</div><div class="d">Map the attack surface: subdomains, endpoints, params, forms</div></div>
+    <div class="arrow">→</div>
+    <div class="stage s2"><div class="n">PHASE 2</div><div class="t">Access</div><div class="d">Become real identities — named sessions with a privilege level</div></div>
+    <div class="arrow">→</div>
+    <div class="stage s3"><div class="n">PHASE 3</div><div class="t">Escalate</div><div class="d">Replay a privileged user's requests as a lesser one → broken access control</div></div>
+    <div class="arrow">→</div>
+    <div class="stage s4"><div class="n">PHASE 4</div><div class="t">Exploit</div><div class="d">Confirm injection / data exposure on the assets found above</div></div>
+    <div class="arrow">→</div>
+    <div class="stage s5"><div class="n">PHASE 5</div><div class="t">Report</div><div class="d">Severity-ranked, client-ready evidence with PoC steps</div></div>
+  </div>
+  <p style="font-size:.78rem;color:var(--mut);margin-top:10px">Each phase reads what the previous one wrote. The order mirrors a real engagement:
+     recon → authenticated access → privilege escalation → reportable impact.</p>
+
+  <h2>Why a bag of tools can't do this</h2>
+  <div class="vs">
+    <div class="vcard them">
+      <h3>A typical scanner project</h3>
+      <ul>
+        <li>Fires templates at a URL <b>in isolation</b></li>
+        <li>No concept of <b>who am I right now</b> — tests logged-out</li>
+        <li>Each tool's output is a <b>separate file</b>; nothing is joined</li>
+        <li>Output = a <b>list of patterns matched</b></li>
+      </ul>
+    </div>
+    <div class="vcard us">
+      <h3>ReconToReport</h3>
+      <ul>
+        <li>Each step <b>attacks what the last step found</b></li>
+        <li>Operates as <b>real sessions</b> with privilege levels</li>
+        <li>One <b>shared database</b> — findings are joinable across tools</li>
+        <li>Output = a <b>demonstrated chain</b> with proof</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Three differentiators — all backed by the actual code</h2>
+  <div class="diffs">
+    <div class="diff">
+      <div class="num">01</div>
+      <h4>Chaining, not scanning</h4>
+      <p>Recon populates <span class="mono">assets</span>; access populates <span class="mono">auth_contexts</span>;
+         later phases attack those specific assets as those specific identities. The shared store <i>is</i> the novelty.</p>
+      <span class="code mono">models.py · shared schema</span>
+    </div>
+    <div class="diff">
+      <div class="num">02</div>
+      <h4>Operating as an identity</h4>
+      <p>A real operator rarely tests logged-out. We capture named sessions with a privilege level and
+         act through them — the way an attacker uses stolen credentials.</p>
+      <span class="code mono">phase2_traffic.py · auth_contexts</span>
+    </div>
+    <div class="diff">
+      <div class="num">03</div>
+      <h4>Proving impact</h4>
+      <p>Flagship finding is <i>differential</i>: anonymous denied, high-priv allowed, low-priv <b>also</b>
+         allowed → broken access control with a two-line PoC. Escalation shown, not guessed.</p>
+      <span class="code mono">phase3_scan.py · _run_privesc_diff</span>
+    </div>
+  </div>
+
+  <h2>Where we're honest (this builds credibility)</h2>
+  <div class="honest">
+    <p><b>Scope:</b> this is <b>pre-exploitation</b> adversary emulation for web apps — the
+       reconnaissance-to-access-to-escalation workflow, which is the most mechanisable part of an engagement.
+       It does <b>not</b> do C2, lateral movement, or evasion, and some findings need manual confirmation.
+       <b>On the roadmap:</b> mapping each finding to a MITRE ATT&amp;CK technique and rendering the achieved
+       tactics as a kill-chain strip — the phases already line up with ATT&amp;CK tactics, so it's a
+       presentation layer over data we already collect.</p>
+  </div>
+
+  <footer>
+    <span>ReconToReport · adversary-emulation pipeline · for authorized security testing only</span>
+    <span class="mono">one URL → recon · access · escalate · exploit · report</span>
+  </footer>
+</div>
+</body>
+</html>
