@@ -1,0 +1,29 @@
+# ReconToReport — bulletproof stall-demo config.
+# Targets the bundled vulnerable demo app. Uses COOKIE roles, so the headline
+# "broken access control" finding fires with NO external tools (no Playwright,
+# nuclei, sqlmap). Start the target first:  python -m recontoreport.web.demo_target
+target:
+  url: "http://127.0.0.1:8911/"
+  engagement_ref: "STALL-DEMO"
+
+scope:
+  include:
+    - "127.0.0.1"
+
+database:
+  url: "sqlite:///demo_scan.db"
+
+output:
+  dir: "./demo_report"
+  formats: ["html"]
+
+# Two identities at different privilege levels, handed in as session cookies.
+# This is what lets the pipeline test privilege escalation without a browser.
+auth:
+  roles:
+    - name: "admin"
+      privilege_level: 10
+      cookie: "session=admin"
+    - name: "user"
+      privilege_level: 1
+      cookie: "session=user"
