@@ -126,7 +126,8 @@
       <div class="k">Severity</div><div><span class="badge b-{{ f.severity }}">{{ f.severity }}</span></div>
       <div class="k">CVSS</div><div>{{ cvss[f.severity] }} <span class="mono" style="color:var(--mut);font-size:.78rem">{{ vector[f.severity] }}</span></div>
       <div class="k">CWE / OWASP</div><div>{{ f.cwe_id or "—" }}{% if f.owasp_category %} · {{ f.owasp_category }}{% endif %}</div>
-      <div class="k">MITRE ATT&amp;CK</div><div><span class="ttag">{{ attack_technique(f) }}</span></div>
+      {% set atk = attack_technique(f) %}
+      <div class="k">MITRE ATT&amp;CK</div><div><a class="ttag" href="{{ atk.url }}" target="_blank">{{ atk.id }} {{ atk.name }}</a></div>
       <div class="k">Confidence</div><div>{{ f.confidence }}</div>
     </div>
     {% if f.description %}<div class="sec"><h4>Description</h4><div>{{ f.description }}</div></div>{% endif %}

@@ -10,15 +10,15 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker, Session
 
-from ..attack import attack_for, build_attack_path
+from ..attack import attack_for, build_attack_path, technique_url
 from ..models import Asset, Finding, Report, SecretMatch, Target
 from ..schema import Severity
 
 
-def attack_technique(f) -> str:
-    """'T1190 Exploit Public-Facing Application' for one finding (Jinja global)."""
+def attack_technique(f) -> dict:
+    """{id, name, url} for one finding — a Jinja global for the ATT&CK cell."""
     tid, tname, _ = attack_for(getattr(f, "cwe_id", None), getattr(f, "tool_source", None))
-    return f"{tid} {tname}"
+    return {"id": tid, "name": tname, "url": technique_url(tid)}
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 

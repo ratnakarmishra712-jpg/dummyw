@@ -1,14 +1,31 @@
 """MITRE ATT&CK mapping + attack-path correlation (red-team presentation layer).
 
 Purely additive: it does NOT change how any phase or tool works. It reads the
-findings the pipeline already produced and (a) tags each one with an ATT&CK
+findings the pipeline already produced and (a) tags each with an ATT&CK
 technique/tactic and (b) strings them into a kill-chain path with a narrative.
-This is what reframes the output from a vulnerability list into an adversary story.
+
+Where the numbers come from
+---------------------------
+* The technique **name** and official **URL** for every ID are loaded from
+  ``data/attack_techniques.json``, which is distilled directly from MITRE's
+  ATT&CK Enterprise STIX bundle (regenerate with ``scripts/fetch_attack.py``).
+  So the ATT&CK metadata is authoritative, offline, and version-pinned.
+* Which technique **ID** a given vulnerability class maps to is our own curated
+  ruleset (:func:`_classify`) — MITRE publishes no canonical CWE→technique map,
+  so this mapping is a deliberate, auditable judgment call.
+* The six-stage kill chain (:data:`TACTIC_ORDER`) is our simplified narrative
+  framing; a technique's full ATT&CK tactics live in the STIX data.
 """
 
 from __future__ import annotations
 
-# Tactic order = the kill chain we render left-to-right / top-to-bottom.
+import json
+from functools import lru_cache
+from pathlib import Path
+
+_DATA = Path(__file__).parent / "data" / "attack_techniques.json"
+
+# Our simplified kill chain, rendered left-to-right / top-to-bottom.
 TACTIC_ORDER = [
     "Reconnaissance",
     "Initial Access",
@@ -19,28 +36,49 @@ TACTIC_ORDER = [
 ]
 
 
-def attack_for(cwe_id: str | None, tool_source: str | None) -> tuple[str, str, str]:
-    """Return (technique_id, technique_name, tactic) for a finding.
+@lru_cache(maxsize=1)
+def _stix() -> dict:
+    """Load the STIX-distilled technique table (id -> {name, tactics, url})."""
+    try:
+        return json.loads(_DATA.read_text()).get("techniques", {})
+    except (OSError, ValueError):
+        return {}
 
-    Classifies by CWE first, then by which tool produced it — both are fields
-    every finding already carries, so nothing new has to be collected.
+
+def _classify(cwe: str, src: str) -> tuple[str, str]:
+    """Curated rule: (CWE / tool source) -> (technique_id, our kill-chain tactic).
+
+    This is the judgment layer. MITRE has no CWE→technique map, so we own it.
     """
-    cwe = (cwe_id or "").upper()
-    src = (tool_source or "").lower()
-
     if cwe == "CWE-89" or "sqli" in src or "sqlmap" in src:
-        return ("T1190", "Exploit Public-Facing Application", "Initial Access")
+        return "T1190", "Initial Access"
     if cwe == "CWE-79" or "xss" in src:
-        return ("T1059.007", "Command & Scripting: JavaScript", "Execution")
+        return "T1059.007", "Execution"
     if cwe == "CWE-285" or "privesc" in src:
-        return ("T1548", "Abuse Elevation Control Mechanism", "Privilege Escalation")
+        return "T1548", "Privilege Escalation"
     if cwe in ("CWE-347", "CWE-326", "CWE-613") or "jwt" in src:
-        return ("T1550.001", "Use Alternate Auth Material: App Tokens", "Credential Access")
+        return "T1550.001", "Credential Access"
     if cwe == "CWE-538" or "secret" in src or "ffuf" in src:
-        return ("T1552", "Unsecured Credentials", "Credential Access")
+        return "T1552", "Credential Access"
     if "nuclei" in src:
-        return ("T1190", "Exploit Public-Facing Application", "Initial Access")
-    return ("T1595", "Active Scanning", "Reconnaissance")
+        return "T1190", "Initial Access"
+    return "T1595", "Reconnaissance"
+
+
+def attack_for(cwe_id: str | None, tool_source: str | None) -> tuple[str, str, str]:
+    """Return (technique_id, technique_name, kill-chain tactic) for a finding.
+
+    The id/tactic come from our curated rule; the name is the authoritative
+    MITRE name from the STIX data (falling back to the id if the data is absent).
+    """
+    tid, tactic = _classify((cwe_id or "").upper(), (tool_source or "").lower())
+    name = (_stix().get(tid) or {}).get("name") or tid
+    return tid, name, tactic
+
+
+def technique_url(tid: str) -> str:
+    """Official MITRE ATT&CK URL for a technique id (from the STIX data)."""
+    return (_stix().get(tid) or {}).get("url") or f"https://attack.mitre.org/techniques/{tid.replace('.', '/')}"
 
 
 def tactic_for(cwe_id: str | None, tool_source: str | None) -> str:
