@@ -118,6 +118,12 @@
     <div class="row rt"><div class="k">Red team</div><div class="v">Gives confirmed, weaponizable XSS — not a "maybe" a defender dismisses. Confirmed client-side execution is a session-hijack / phishing primitive you build on.</div></div>
   </div>
 
+  <div class="card">
+    <div class="top"><span class="name">Security-header &amp; CORS audit</span><span class="for">catching missing hardening and over-open sharing</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Reads the target's response headers and flags missing defences (HSTS, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options) and a wildcard CORS policy that lets any site read authenticated responses.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Cheap, always-on reconnaissance of the app's defensive posture — missing headers open the door to clickjacking, injection and downgrade, and wildcard CORS leaks data to an attacker-controlled page.</div></div>
+  </div>
+
   <!-- PHASE 4 -->
   <div class="phase p4"><div class="bar"></div><div><div class="lbl">Phase 4 · Exploit</div><div class="sub">prove impact</div></div></div>
 
@@ -137,6 +143,18 @@
     <div class="top"><span class="name">Full injection engine</span><span class="for">confirming and deepening injection</span></div>
     <div class="row how"><div class="k">How</div><div class="v">Points the specialist SQL-injection tool at parameterized URLs in automatic mode and records its verdict.</div></div>
     <div class="row rt"><div class="k">Red team</div><div class="v">Goes past detection toward real exploitation — dumping schemas, extracting data — the proof that turns "possible SQLi" into an undeniable breach demonstration.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Open-redirect detection</span><span class="for">turning the trusted domain into a phishing lure</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Injects an external URL into redirect-style parameters (next, url, return, dest…) and watches whether the server sends the browser off-site, without following the redirect itself.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">A link that starts on the victim's real domain but lands on your page — the most convincing phishing primitive there is, and a stepping stone to credential theft.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Path-traversal / LFI probe</span><span class="for">reading files off the server</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Slips a traversal payload (../../etc/passwd) into parameters and confirms the hit by the unmistakable root:x:0:0 signature in the response.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Arbitrary file read is a critical foothold — source code, config secrets, credentials — and often the pivot from a web bug to full server compromise.</div></div>
   </div>
 
   <!-- PHASE 5 -->

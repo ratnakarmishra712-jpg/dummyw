@@ -100,7 +100,9 @@
     staff-only admin area. If a nobody-account can walk into a restricted room, that's serious, and the tool
     proves it rather than guessing.<br><br>
     It also checks for the classic 'inject code into the page' attacks — but instead of guessing, it loads
-    the page in a real browser and watches whether the attack actually <i>fires</i>. Confirmed, not assumed."</p>
+    the page in a real browser and watches whether the attack actually <i>fires</i>. Confirmed, not assumed.
+    And it audits the site's defensive posture — the security headers and sharing rules that are supposed to
+    protect your users — flagging the ones that are missing or wide open."</p>
   </div>
 
   <!-- BEAT 4 -->
@@ -109,8 +111,9 @@
     <p class="say">"Finding a weakness is one thing; showing it's real is another. So it safely confirms the
     big ones. It checks whether the login tokens the site hands out can be forged — because a forgeable
     token means impersonating anyone. And it probes the input fields for database injection — the classic
-    'type a quote and watch the database spill an error' — which is how real breaches start. Where it finds
-    one, it records a concrete, repeatable proof."</p>
+    'type a quote and watch the database spill an error' — which is how real breaches start. It tries to
+    read files straight off the server, and it checks whether the site can be turned into a phishing lure
+    that bounces your users to an attacker's page. Where it finds one, it records a concrete, repeatable proof."</p>
   </div>
 
   <!-- BEAT 5 -->
@@ -119,7 +122,10 @@
     <p class="say">"Everything an attacker would grab on the way out — exposed passwords, API keys, anything
     sensitive that leaked into the traffic — it gathers into one place. Then it does the part humans hate
     most: it writes the report. Every finding ranked by danger, with the business impact and exactly how to
-    fix it. Client-ready — from that one web address you started with."</p>
+    fix it. It boils the whole thing down to a single <i>security grade, A to F</i>, writes a plain-English
+    'here's how I'd break in' summary, and lays every technique onto the MITRE ATT&amp;CK kill chain — even
+    exporting a file your client can open in the official ATT&amp;CK tool. Client-ready — from that one web
+    address you started with."</p>
   </div>
 
   <!-- CLOSE -->
