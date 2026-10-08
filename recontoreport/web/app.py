@@ -68,7 +68,8 @@ def _build_config(form: dict) -> tuple[Config, list[int], bool]:
 
     roles: list[AuthRole] = []
     for r in form.get("auth_roles") or []:
-        if not (r.get("login_url") and r.get("username")):
+        # A role is usable if it has a cookie, or a login_url + username.
+        if not (r.get("cookie") or (r.get("login_url") and r.get("username"))):
             continue
         roles.append(AuthRole(
             name=r.get("name") or "role",
@@ -80,6 +81,7 @@ def _build_config(form: dict) -> tuple[Config, list[int], bool]:
             password_selector=r.get("password_selector") or "input[name=password]",
             submit_selector=r.get("submit_selector") or "button[type=submit]",
             success_selector=r.get("success_selector") or "",
+            cookie=r.get("cookie", ""),
         ))
 
     run_id = form["_run_id"]
@@ -177,40 +179,19 @@ def create_app() -> Flask:
     @app.post("/demo")
     def demo():  # noqa: ANN202
         """Start the bundled zero-install vulnerable target in a background thread."""
-        import http.server
-        import socketserver
         global _DEMO_STARTED
         url = "http://127.0.0.1:8911/"
         if not globals().get("_DEMO_STARTED"):
-            from importlib import import_module
-            vt = import_module("scripts.vuln_target") if False else None  # noqa: F841
-            # Import the handler without triggering its __main__ server loop.
-            import base64
-            from urllib.parse import parse_qs, urlparse
-            alg = base64.urlsafe_b64encode(b'{"alg":"none"}').decode().rstrip("=")
-            pl = base64.urlsafe_b64encode(b'{"user":"admin"}').decode().rstrip("=")
-            jwt = f"{alg}.{pl}."
-            home = (f'<html><body><a href="/product.php?id=1">p</a>'
-                    f'<a href="/search.php?q=x">s</a><a href="/.git/config">g</a>'
-                    f'<!-- {jwt} AKIAIOSFODNN7EXAMPLE admin@demo.local --></body></html>')
-
-            class H(http.server.BaseHTTPRequestHandler):
-                def do_GET(self):  # noqa: N802
-                    p = urlparse(self.path)
-                    self.send_response(200); self.send_header("Content-Type", "text/html"); self.end_headers()
-                    if p.path == "/search.php":
-                        q = (parse_qs(p.query).get("q") or [""])[0]
-                        self.wfile.write(f"<html><body>Results: {q}</body></html>".encode())
-                    elif p.path in ("/product.php", "/listproducts.php"):
-                        self.wfile.write(b"<html><body>item<!-- AKIAIOSFODNN7EXAMPLE --></body></html>")
-                    else:
-                        self.wfile.write(home.encode())
-                def log_message(self, *a): pass
-
-            srv = socketserver.TCPServer(("127.0.0.1", 8911), H)
-            threading.Thread(target=srv.serve_forever, daemon=True).start()
-            globals()["_DEMO_STARTED"] = True
-        return jsonify({"url": url})
+            from .demo_target import start_demo
+            try:
+                url = start_demo()
+                globals()["_DEMO_STARTED"] = True
+            except OSError:
+                pass  # already running on the port
+        return jsonify({"url": url, "roles": [
+            {"name": "admin", "privilege_level": 10, "cookie": "session=admin"},
+            {"name": "user", "privilege_level": 1, "cookie": "session=user"},
+        ]})
 
     @app.get("/report/<run_id>")
     def report(run_id):  # noqa: ANN202

@@ -102,6 +102,10 @@ class AuthRole:
     submit_selector: str = "button[type=submit]"
     success_selector: str = ""   # optional: waited for to confirm login worked
     script: str = ""             # optional: path to a custom login script
+    # Shortcut: paste a session cookie string ("name=value; name2=value2") to
+    # create this auth context WITHOUT a browser login — enables the privilege
+    # escalation check with no Playwright/mitmproxy required.
+    cookie: str = ""
 
 
 @dataclass
@@ -152,6 +156,7 @@ class Config:
                 submit_selector=str(r.get("submit_selector", "button[type=submit]")),
                 success_selector=str(r.get("success_selector", "")),
                 script=str(r.get("script", "")),
+                cookie=str(r.get("cookie", "")),
             )
             for i, r in enumerate(auth_raw.get("roles") or [])
         ]

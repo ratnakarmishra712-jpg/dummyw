@@ -187,6 +187,14 @@ class ScanPhase(Phase):
             return None, 0
 
     def _run_privesc_diff(self, errors: list[str]) -> int:
+        """Differential broken-access-control test.
+
+        For each in-scope page: a page is only a finding if an **anonymous**
+        user is denied but a **higher-priv** user is allowed (so it's genuinely
+        protected) AND a **lower-priv** user is ALSO allowed (so access control
+        is broken). The anonymous filter excludes public pages — no false
+        positives on the homepage.
+        """
         with session_scope(self.ctx.session_factory) as s:
             contexts = s.execute(
                 select(AuthContext)
@@ -196,70 +204,62 @@ class ScanPhase(Phase):
             if len(contexts) < 2:
                 self.log.info("privesc: need >=2 auth_contexts; skipping")
                 return 0
-
             high = contexts[0]
-            lowers = contexts[1:]
-            # Baseline: successful GETs captured under the high-priv context.
-            baseline = s.execute(
-                select(HttpTransaction).where(
-                    HttpTransaction.target_id == self.ctx.target_id,
-                    HttpTransaction.auth_context_id == high.id,
-                    HttpTransaction.method == "GET",
-                )
+            high_data = (high.name, high.cookies, high.headers)
+            lower_data = [(c.name, c.cookies, c.headers) for c in contexts[1:]]
+            # Candidate URLs = in-scope assets we can GET.
+            assets = s.execute(
+                select(Asset).where(Asset.target_id == self.ctx.target_id)
             ).scalars().all()
-            baseline = [t for t in baseline if (t.status_code or 0) < 400][:200]
+            urls = []
+            seen = set()
+            for a in assets:
+                u = a.url.split("#")[0]
+                host = urlparse(u).hostname or ""
+                if u not in seen and self.config.scope.in_scope(host):
+                    seen.add(u)
+                    urls.append(u)
 
-            # Snapshot the data we need before leaving the session.
-            baseline_data = [(t.id, t.url, t.response_length or 0) for t in baseline]
-            lower_data = [(c.id, c.name, c.cookies, c.headers) for c in lowers]
-
+        high_name, high_cookies, high_headers = high_data
         created = 0
-        for (lc_id, lc_name, lc_cookies, lc_headers) in lower_data:
-            for (origin_id, url, base_len) in baseline_data:
-                host = urlparse(url).hostname or ""
-                if not self.config.scope.in_scope(host):
+        for url in urls[:200]:
+            anon_status, _ = self._http_get(url, None, None)
+            if anon_status is None or 200 <= anon_status < 400:
+                continue  # public or unreachable — not an access-control issue
+            high_status, _ = self._http_get(url, high_cookies, high_headers)
+            if high_status is None or not (200 <= high_status < 300):
+                continue  # even the privileged user can't reach it
+            for (lc_name, lc_cookies, lc_headers) in lower_data:
+                low_status, low_len = self._http_get(url, lc_cookies, lc_headers)
+                if low_status is None or not (200 <= low_status < 300):
                     continue
-                status, length = self._http_get(url, lc_cookies, lc_headers)
-                if status is None:
-                    continue
-                # Record the replay transaction.
+                # anon denied, high allowed, low ALSO allowed -> broken access control.
                 with session_scope(self.ctx.session_factory) as s:
-                    s.add(HttpTransaction(
+                    s.add(Finding(
                         target_id=self.ctx.target_id,
-                        auth_context_id=lc_id,
-                        origin_transaction_id=origin_id,
-                        tool_source="privesc-replay",
-                        method="GET",
-                        url=url,
-                        status_code=status,
-                        response_length=length,
+                        title=f"Broken access control: '{lc_name}' reached a protected page",
+                        cwe_id="CWE-285",
+                        owasp_category="A01:2021 Broken Access Control",
+                        severity=Severity.HIGH.value,
+                        confidence=Confidence.FIRM.value,
+                        description=(
+                            f"{url} is denied to anonymous users (HTTP {anon_status}) "
+                            f"but the lower-privilege role '{lc_name}' was able to access "
+                            f"it (HTTP {low_status}), the same as the higher-privilege "
+                            f"role. The server is not enforcing per-role authorization."
+                        ),
+                        tool_source="privesc-diff",
+                        poc_steps=(
+                            f"Anonymous GET {url} -> HTTP {anon_status} (denied)\n"
+                            f"GET {url} as '{lc_name}' -> HTTP {low_status} (allowed)"
+                        ),
+                        remediation=(
+                            "Enforce server-side authorization checks per role on this "
+                            "endpoint; never rely on hiding links in the UI."
+                        ),
+                        status=FindingStatus.OPEN.value,
                     ))
-                # Broken access control: lower-priv got a 2xx on a high-priv resource.
-                if 200 <= status < 300:
-                    with session_scope(self.ctx.session_factory) as s:
-                        s.add(Finding(
-                            target_id=self.ctx.target_id,
-                            title=f"Possible broken access control: {lc_name} reached {url}",
-                            cwe_id="CWE-285",
-                            owasp_category="A01:2021 Broken Access Control",
-                            severity=Severity.HIGH.value,
-                            confidence=Confidence.TENTATIVE.value,
-                            description=(
-                                f"A resource captured under higher-privilege context "
-                                f"'{self.config.target_url}' returned HTTP {status} "
-                                f"when replayed with the lower-privilege context "
-                                f"'{lc_name}'. Review whether this endpoint should be "
-                                f"accessible to that role."
-                            ),
-                            tool_source="privesc-diff",
-                            poc_steps=f"Replay GET {url} with '{lc_name}' cookies -> HTTP {status}",
-                            remediation=(
-                                "Enforce server-side authorization checks per role on "
-                                "this endpoint; do not rely on UI/navigation hiding."
-                            ),
-                            status=FindingStatus.OPEN.value,
-                        ))
-                    created += 1
+                created += 1
         self.log.info("privesc: %s findings", created)
         return created
 

@@ -207,53 +207,72 @@ class TrafficPhase(Phase):
             )
 
     # -- entrypoint ----------------------------------------------------------
+    def _cookie_string_to_list(self, cookie: str) -> list[dict]:
+        """Parse 'a=1; b=2' into [{'name':'a','value':'1'}, ...]."""
+        out = []
+        for part in cookie.split(";"):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                out.append({"name": k.strip(), "value": v.strip()})
+        return out
+
+    def _persist_cookie_context(self, role) -> None:
+        """Create an auth_context directly from a pasted cookie — no browser."""
+        cookies = self._cookie_string_to_list(role.cookie)
+        with session_scope(self.ctx.session_factory) as s:
+            existing = s.execute(
+                select(AuthContext).where(
+                    AuthContext.target_id == self.ctx.target_id,
+                    AuthContext.name == role.name,
+                )
+            ).scalar_one_or_none()
+            if existing is None:
+                existing = AuthContext(target_id=self.ctx.target_id, name=role.name)
+                s.add(existing)
+            existing.privilege_level = role.privilege_level
+            existing.cookies = cookies
+            existing.storage_state = {"cookies": cookies}
+
     def run(self) -> PhaseResult:
         errors: list[str] = []
 
-        # With no login roles there is nothing to authenticate and nobody to
-        # drive the passive proxy, so capturing is pointless — skip cleanly
-        # instead of spinning a proxy that captures nothing (or fails).
         if not self.config.auth_roles:
             self.log.info("traffic: no auth roles configured; skipping capture.")
+            return self._result(ok=True, errors=[])
+
+        # Split roles: cookie-only (no browser needed) vs. real logins.
+        cookie_roles = [r for r in self.config.auth_roles if r.cookie and not r.login_url]
+        login_roles = [r for r in self.config.auth_roles if not (r.cookie and not r.login_url)]
+
+        contexts_created = 0
+        for role in cookie_roles:
+            self._persist_cookie_context(role)
+            contexts_created += 1
+            self.log.info("traffic: created auth context '%s' from cookie", role.name)
+
+        if not login_roles:
+            # All roles were cookie-based — done, no proxy/browser required.
             return self._result(ok=True, errors=[])
 
         try:
             ensure_available(self.config.tool("mitmproxy"))
         except Exception as exc:
-            return self._result(ok=False, errors=[str(exc)])
+            errors.append(str(exc))
+            return self._result(ok=contexts_created > 0, errors=errors)
 
         before = self._tx_count()
-        contexts_created = 0
 
-        if self.config.auth_roles:
-            for role in self.config.auth_roles:
-                proc = None
-                try:
-                    # Row first, so the proxy can tag this role's traffic.
-                    ac_id = self._create_pending_auth_context(role)
-                    proc = self._start_proxy(auth_context_id=ac_id)
-                    state = self._login_and_capture_state(role)
-                    self._persist_auth_context(role, state)
-                    contexts_created += 1
-                    self.log.info("captured auth context '%s'", role.name)
-                except Exception as exc:
-                    errors.append(f"auth role '{role.name}': {type(exc).__name__}: {exc}")
-                finally:
-                    if proc is not None:
-                        self._stop_proxy(proc)
-        else:
-            # Passive capture window.
+        for role in login_roles:
             proc = None
             try:
-                proc = self._start_proxy(auth_context_id=None)
-                window = self.config.proxy.capture_window_seconds
-                self.log.info(
-                    "passive capture: proxy on %s for %ss — route traffic through it now",
-                    self._proxy_url(), window,
-                )
-                time.sleep(window)
+                ac_id = self._create_pending_auth_context(role)
+                proc = self._start_proxy(auth_context_id=ac_id)
+                state = self._login_and_capture_state(role)
+                self._persist_auth_context(role, state)
+                contexts_created += 1
+                self.log.info("captured auth context '%s'", role.name)
             except Exception as exc:
-                errors.append(f"passive capture: {type(exc).__name__}: {exc}")
+                errors.append(f"auth role '{role.name}': {type(exc).__name__}: {exc}")
             finally:
                 if proc is not None:
                     self._stop_proxy(proc)

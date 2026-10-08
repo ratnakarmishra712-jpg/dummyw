@@ -8,6 +8,10 @@
   :root{--bg:#0a0a0c;--panel:#111114;--panel2:#161619;--fg:#f0f0f2;--mut:#7f7f88;--bd:#232327;
     --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;--purple:#b14cff;
     --critical:#b14cff;--high:#ff4d4d;--medium:#f2a100;--low:#f2c200;--info:#5b8cff;--sidebar:#0d0d10}
+  body.light{--bg:#f6f7f9;--panel:#ffffff;--panel2:#f0f1f4;--fg:#1a1c20;--mut:#5b616b;
+    --bd:#e2e4e9;--sidebar:#ffffff;--green:#1a9e55;--yellow:#b8860b}
+  .themebtn{background:transparent;border:1px solid var(--bd);color:var(--fg);border-radius:999px;
+    padding:7px 13px;font-size:.72rem;cursor:pointer;font-weight:700;letter-spacing:.04em}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--fg);font-family:"Helvetica Neue",Arial,sans-serif;font-size:14px}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
@@ -87,7 +91,10 @@
   <div class="main">
     <div class="top">
       <div><h1 id="topTitle">Dashboard</h1><div class="sub mono" id="topSub">no scan yet</div></div>
-      <div><span class="pill st-ok" id="topStatus">idle</span></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="themebtn" onclick="toggleTheme()" id="themeBtn">☀ Light</button>
+        <span class="pill st-ok" id="topStatus">idle</span>
+      </div>
     </div>
     <div class="content">
 
@@ -175,19 +182,31 @@ function addRole(){
     <div><label>Password</label><input type="password" class="r_pass"></div></div>
     <div class="row"><div><label>Username selector</label><input type="text" class="r_us" value="input[name=username]"></div>
     <div><label>Password selector</label><input type="text" class="r_ps" value="input[name=password]"></div></div>
-    <label>Submit selector</label><input type="text" class="r_sub" value="button[type=submit]">`;
+    <label>Submit selector</label><input type="text" class="r_sub" value="button[type=submit]">
+    <label>— OR — Session cookie (skips login, enables privesc without a browser)</label>
+    <input type="text" class="r_cookie" placeholder="session=abc123">`;
   document.getElementById('roles').appendChild(d);
 }
 function roles(){return [...document.querySelectorAll('.role')].map(r=>({
   name:r.querySelector('.r_name').value,privilege_level:r.querySelector('.r_priv').value,
   login_url:r.querySelector('.r_login').value,username:r.querySelector('.r_user').value,
   password:r.querySelector('.r_pass').value,username_selector:r.querySelector('.r_us').value,
-  password_selector:r.querySelector('.r_ps').value,submit_selector:r.querySelector('.r_sub').value}));}
+  password_selector:r.querySelector('.r_ps').value,submit_selector:r.querySelector('.r_sub').value,
+  cookie:(r.querySelector('.r_cookie')?.value)||''}));}
 
 async function startDemo(){
-  const {url}=await (await fetch('/demo',{method:'POST'})).json();
-  document.getElementById('url').value=url;document.getElementById('authorized').checked=true;
-  document.getElementById('formErr').textContent='Demo target ready — click Run scan.';
+  const r=await (await fetch('/demo',{method:'POST'})).json();
+  document.getElementById('url').value=r.url;document.getElementById('authorized').checked=true;
+  // auto-fill the two demo login roles (admin + user) so privesc runs
+  document.getElementById('roles').innerHTML='';
+  for(const role of (r.roles||[])){
+    addRole();
+    const card=document.querySelectorAll('.role');const el=card[card.length-1];
+    el.querySelector('.r_name').value=role.name;
+    el.querySelector('.r_priv').value=role.privilege_level;
+    el.querySelector('.r_cookie').value=role.cookie;
+  }
+  document.getElementById('formErr').textContent='Demo target + admin/user roles loaded — click Run scan.';
 }
 let CURRENT=null;
 async function startScan(){
@@ -253,6 +272,13 @@ async function loadHistory(){
         <td style="text-align:right"><a href="/report/${r.id}" target="_blank" style="color:var(--yellow)">open ↗</a></td></tr>`).join('')+'</tbody></table>';
   }catch(e){h.innerHTML='<div class="empty">Could not load history.</div>';}
 }
+function toggleTheme(){
+  const light=document.body.classList.toggle('light');
+  document.getElementById('themeBtn').textContent=light?'☾ Dark':'☀ Light';
+  try{localStorage.setItem('r2r_theme',light?'light':'dark');}catch(e){}
+}
+try{if(localStorage.getItem('r2r_theme')==='light'){document.body.classList.add('light');
+  document.getElementById('themeBtn').textContent='☾ Dark';}}catch(e){}
 loadHistory();renderBars({});
 </script>
 </body>
