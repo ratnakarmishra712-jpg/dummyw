@@ -84,11 +84,19 @@
      {{ total_findings }} finding(s) were identified across {{ asset_count }} discovered asset(s). The table
      below summarizes severity distribution; each finding is detailed in the following section with impact and
      remediation guidance.</p>
+  {% set gcolor = {"green":"var(--green)","yellow":"var(--medium)","red":"var(--high)"}[grade.color] %}
+  <div style="display:flex;gap:18px;align-items:center;margin:14px 0 6px">
+    <div style="font-size:3rem;font-weight:800;width:78px;height:78px;border:3px solid {{ gcolor }};color:{{ gcolor }};border-radius:14px;display:flex;align-items:center;justify-content:center">{{ grade.grade }}</div>
+    <div><div style="font-size:.7rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">Security grade</div>
+      <div style="font-size:1.1rem;font-weight:800">{{ grade.score }} / 100</div>
+      <div style="color:var(--mut);font-size:.85rem">{{ grade.label }}</div></div>
+  </div>
   <div class="kpis">
     {% for sev in severity_order %}
     <div class="kpi {{ sev }}"><div class="n">{{ counts.get(sev, 0) }}</div><div class="l">{{ sev }}</div></div>
     {% endfor %}
   </div>
+  {% if findings %}<div class="narr" style="border-color:var(--high)"><b>Attacker's-eye view — </b>{{ attacker_story }}</div>{% endif %}
 
   {% if findings %}
   <h2>Attack Path — MITRE ATT&amp;CK</h2>

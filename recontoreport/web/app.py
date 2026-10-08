@@ -16,7 +16,8 @@ from urllib.parse import urlparse
 
 from flask import Flask, jsonify, request, send_file
 
-from ..attack import attack_for, build_attack_path
+from ..attack import attack_for, attacker_story, build_attack_path
+from ..scoring import grade as security_grade
 from ..config import (
     AuthRole,
     Config,
@@ -258,16 +259,25 @@ def create_app() -> Flask:
                             "url": r["url"] or "", "attack": f"{tid} {tname}", "tactic": tactic})
             assets = con.execute("SELECT count(*) FROM assets").fetchone()[0]
             secrets = con.execute("SELECT count(*) FROM secret_matches").fetchone()[0]
+            # Blast-radius nodes: sample of assets, flagged if a finding hits them.
+            hit_urls = {f["url"] for f in out if f["url"]}
+            arows = con.execute("SELECT type,url FROM assets LIMIT 60").fetchall()
+            blast = [{"type": a["type"],
+                      "url": a["url"],
+                      "hit": any(a["url"] and a["url"] in h or (h and h in a["url"]) for h in hit_urls)}
+                     for a in arows]
         finally:
             con.close()
-        path = build_attack_path(
-            [{"cwe_id": f["cwe"], "tool_source": f["source"], "title": f["title"],
-              "severity": f["severity"]} for f in out]
-        )
+        plain = [{"cwe_id": f["cwe"], "tool_source": f["source"], "title": f["title"],
+                  "severity": f["severity"]} for f in out]
+        path = build_attack_path(plain)
         attack_path = {"reached": path["reached"], "narrative": path["narrative"],
                        "tactics": {t: len(v) for t, v in path["by_tactic"].items()}}
         return jsonify({"findings": out, "counts": counts, "assets": assets,
-                        "secrets": secrets, "attack_path": attack_path})
+                        "secrets": secrets, "attack_path": attack_path,
+                        "grade": security_grade(counts),
+                        "story": attacker_story(plain),
+                        "blast": blast})
 
     def _serve_disk_report(run_id):
         safe = "".join(c for c in run_id if c.isalnum() or c in "-_")

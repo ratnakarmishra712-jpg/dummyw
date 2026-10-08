@@ -120,3 +120,56 @@ def build_attack_path(findings) -> dict:
     )
 
     return {"by_tactic": by_tactic, "reached": reached, "narrative": narrative}
+
+
+def attacker_story(findings) -> str:
+    """A short first-person 'if I were attacking you' narrative from the findings.
+
+    Pure presentation — reads the same findings and writes them as an attacker's
+    account, ordered along the kill chain. Great for a stall / executive summary.
+    """
+    def get(f, k):
+        return getattr(f, k, None) if not isinstance(f, dict) else f.get(k)
+
+    kinds = set()
+    for f in findings:
+        cwe = (get(f, "cwe_id") or "").upper()
+        src = (get(f, "tool_source") or "").lower()
+        if cwe == "CWE-89" or "sqli" in src or "sqlmap" in src:
+            kinds.add("sqli")
+        elif cwe == "CWE-79" or "xss" in src:
+            kinds.add("xss")
+        elif cwe == "CWE-285" or "privesc" in src:
+            kinds.add("privesc")
+        elif cwe in ("CWE-347", "CWE-326", "CWE-613") or "jwt" in src:
+            kinds.add("jwt")
+        elif cwe == "CWE-538" or "secret" in src or "ffuf" in src:
+            kinds.add("secret")
+        else:
+            kinds.add("recon")
+
+    if not kinds:
+        return ("I ran my playbook against this target and couldn't find a way in — "
+                "nothing I tried gave me a foothold. Good sign for the defender.")
+
+    lines = ["Here's how I'd break in:"]
+    lines.append("First, I'd map the site and quietly note every page, form and "
+                 "parameter — my way around the building.")
+    if "sqli" in kinds:
+        lines.append("Then I'd hit a vulnerable input and inject into the database — "
+                     "that alone can hand me your entire user table.")
+    if "secret" in kinds:
+        lines.append("Along the way I'd scoop up the keys and tokens you've left "
+                     "lying in responses — often the pivot into your other systems.")
+    if "jwt" in kinds:
+        lines.append("I'd forge one of your login tokens and walk in as any user I like, "
+                     "including an administrator.")
+    if "privesc" in kinds:
+        lines.append("With a throwaway account anyone can register, I'd reach pages "
+                     "meant only for staff — your access control isn't actually enforced.")
+    if "xss" in kinds:
+        lines.append("And I'd plant script in a page that runs in your users' browsers — "
+                     "enough to hijack their sessions.")
+    lines.append("Chaining these together, I don't just find one bug — I get an "
+                 "end-to-end break-in. That's what this report proves.")
+    return " ".join(lines)

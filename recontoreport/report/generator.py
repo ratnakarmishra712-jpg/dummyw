@@ -10,9 +10,10 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker, Session
 
-from ..attack import attack_for, build_attack_path, technique_url
+from ..attack import attack_for, attacker_story, build_attack_path, technique_url
 from ..models import Asset, Finding, Report, SecretMatch, Target
 from ..schema import Severity
+from ..scoring import grade as security_grade
 
 
 def attack_technique(f) -> dict:
@@ -65,6 +66,8 @@ def _collect(session: Session, target_id: int) -> dict:
         "asset_count": len(assets),
         "secrets": secrets,
         "attack": build_attack_path(findings),
+        "grade": security_grade(counts),
+        "attacker_story": attacker_story(findings),
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
