@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Toolchain</title>
+<style>
+  :root{
+    --bg:#0a0a0c; --panel:#121216; --panel2:#17171c; --fg:#f1f1f3; --mut:#8a8a93; --bd:#262630;
+    --green:#38e07a; --yellow:#f2c200; --red:#ff4d4d; --blue:#5b8cff; --purple:#b14cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .page{width:1000px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px;
+    padding:38px 42px 30px}
+  .brand{font-size:.85rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--green)}
+  .kicker{font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;color:var(--green);margin-top:4px}
+  h1{font-size:1.7rem;font-weight:900;letter-spacing:-.02em;margin:10px 0 2px}
+  .lede{color:var(--mut);font-size:.9rem;margin-bottom:8px}
+  /* phase band */
+  .phase{display:flex;align-items:center;gap:12px;margin:26px 0 12px}
+  .phase .bar{width:4px;height:26px;border-radius:3px}
+  .phase .lbl{font-size:.9rem;font-weight:900;letter-spacing:.02em}
+  .phase .sub{font-size:.7rem;color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
+  .p1 .bar{background:var(--green)}.p2 .bar{background:var(--blue)}.p3 .bar{background:var(--yellow)}
+  .p4 .bar{background:var(--red)}.p5 .bar{background:var(--purple)}
+  /* tool card */
+  .card{border:1px solid var(--bd);border-radius:13px;padding:16px 18px;margin:11px 0;background:var(--panel)}
+  .card .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:9px}
+  .card .name{font-size:1.06rem;font-weight:800}
+  .card .for{font-size:.84rem;color:var(--mut);font-style:italic}
+  .card .for::before{content:"— for ";font-style:normal}
+  .row{display:grid;grid-template-columns:72px 1fr;gap:12px;margin:7px 0;font-size:.9rem;line-height:1.5}
+  .row .k{font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;font-weight:800;padding-top:3px}
+  .row.how .k{color:var(--blue)}
+  .row.rt .k{color:var(--green)}
+  .row .v{color:#dcdce0}
+  .row.rt .v{color:#eaf7ee}
+  .row.rt{background:rgba(56,224,122,.06);border-radius:8px;padding:8px 10px;margin-left:-6px}
+  .tie{border:1px solid var(--green);border-radius:13px;padding:16px 20px;margin-top:22px;background:var(--panel);font-size:.98rem;line-height:1.55}
+  .tie b{color:var(--green)}
+  footer{margin-top:22px;color:var(--mut);font-size:.68rem;border-top:1px solid var(--bd);padding-top:12px;text-align:center}
+  @media print{html,body{background:#fff}.page{border:none;margin:0;background:#fff;color:#111}
+    .row .v,.row.rt .v{color:#1a1a1a}.card,.tie{background:#fff}.row.rt{background:#f2faf5}}
+  @media(max-width:640px){.row{grid-template-columns:1fr}.row .k{padding-top:0}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">RECON<b>//</b>REPORT</div>
+  <div class="kicker">Toolchain · one card per tool · how it works + the red-team payoff</div>
+  <h1>The toolchain, tool by tool</h1>
+  <div class="lede">Format: what it's for → how it works (the mechanism) → why it helps the red team.</div>
+
+  <!-- PHASE 1 -->
+  <div class="phase p1"><div class="bar"></div><div><div class="lbl">Phase 1 · Recon</div><div class="sub">scout the target</div></div></div>
+
+  <div class="card">
+    <div class="top"><span class="name">Subdomain discovery</span><span class="for">finding the rest of the target's footprint</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Feeds the main domain to passive intelligence sources — certificate-transparency logs, passive DNS, public search APIs — and collects every hostname under it. No packets hit the target; it's all third-party data.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Expands your attack surface (dev·, staging·, vpn·) before you're on anyone's radar. Staging boxes are usually softer than production — this is where the unlocked side door hides.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Web crawler</span><span class="for">mapping the live attack surface</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Walks the site breadth-first like a browser, extracting links, script files, and forms with their input names, and saves every response body. Stays inside the authorized scope.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Gives the real target map and banks page contents, so later stages attack known endpoints instead of blind-fuzzing. Fewer requests, less noise, lower chance of tripping a WAF.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Content / directory discovery</span><span class="for">finding what isn't linked</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Requests base/&lt;word&gt; for every entry in a wordlist and keeps the ones that resolve; anything ending in a risky extension (backup, archive, VCS metadata, env file) is flagged.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Surfaces forgotten assets — exposed .git, backup.zip, an orphaned admin panel. These left-behind files are classic high-value footholds a linked-only crawl never sees.</div></div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase p2"><div class="bar"></div><div><div class="lbl">Phase 2 · Access</div><div class="sub">become a user</div></div></div>
+
+  <div class="card">
+    <div class="top"><span class="name">Browser login automation</span><span class="for">operating as a real authenticated user</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Drives a headless browser through the actual login form, then exports the live session (cookies) and keeps it, tagged with a privilege rank.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Moves you from anonymous prober to insider. Almost every meaningful web attack is post-authentication — this is the pivot from outsider knocking to user already inside.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Session / cookie import</span><span class="for">using a credential you already hold</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Accepts a raw session cookie and registers it as a ready identity — no login needed.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Models exactly what happens after you phish, crack, or buy a session: drop the stolen token in and immediately act as that user. Mirrors real credential-access tradecraft.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Passive traffic proxy</span><span class="for">seeing the real API underneath the UI</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Routes browsing through an intercepting proxy and logs every request/response pair, including tokens and background API calls.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Reveals the undocumented endpoints and auth tokens the front-end actually uses — the real attack surface lives in the API, not the buttons.</div></div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase p3"><div class="bar"></div><div><div class="lbl">Phase 3 · Scan</div><div class="sub">find the ways in</div></div></div>
+
+  <div class="card">
+    <div class="top"><span class="name">Template signature engine</span><span class="for">sweeping known, documented flaws</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Runs a library of "send this request → match this response pattern" templates across the mapped URLs, each carrying its own severity and weakness class.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Clears low-hanging fruit fast (default creds, known CVEs, misconfigs) so human effort goes to the hard stuff — and you're never behind a conventional scanner on coverage.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Broken-access-control differential</span><span class="for">catching authorization that isn't enforced</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Requests the same page three ways — anonymous, and as each privilege level you hold — and compares outcomes. A finding fires only when anonymous is denied but a low-privilege account is allowed: gated, but gated wrong.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">The privilege-escalation check a signature scanner structurally can't do — it has no concept of identity. This is how a throwaway user account becomes access you shouldn't have.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Behavioral XSS check</span><span class="for">confirming script injection actually executes</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Injects a unique marker into parameters, loads the page in a real browser, and watches whether it lands in the DOM unescaped or triggers script execution. Rated high only if it fired.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Gives confirmed, weaponizable XSS — not a "maybe" a defender dismisses. Confirmed client-side execution is a session-hijack / phishing primitive you build on.</div></div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase p4"><div class="bar"></div><div><div class="lbl">Phase 4 · Exploit</div><div class="sub">prove impact</div></div></div>
+
+  <div class="card">
+    <div class="top"><span class="name">Token (JWT) analysis</span><span class="for">breaking the site's own auth tokens</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Pulls auth tokens from captured traffic, decodes them, and flags forgeable conditions: "no signature required," a weak/guessable signing secret, or no expiry.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">A forgeable token is total auth bypass — mint one for any user, including admin. The cleanest path from "I have a token" to "I am whoever I want."</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Error-based SQL injection</span><span class="for">proving database injection with zero dependencies</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Appends a single quote to each parameter, re-requests, and watches for a database error surfacing in the response — the classic tell that input reaches a query unsanitized.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Confirms the highest-impact web flaw (data exfiltration, sometimes RCE) and runs on any machine with nothing installed — your demo and field kit never depend on a tool being present.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Full injection engine</span><span class="for">confirming and deepening injection</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Points the specialist SQL-injection tool at parameterized URLs in automatic mode and records its verdict.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">Goes past detection toward real exploitation — dumping schemas, extracting data — the proof that turns "possible SQLi" into an undeniable breach demonstration.</div></div>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="phase p5"><div class="bar"></div><div><div class="lbl">Phase 5 · Harvest &amp; Report</div><div class="sub">loot and write-up</div></div></div>
+
+  <div class="card">
+    <div class="top"><span class="name">Secret scraping</span><span class="for">collecting exposed credentials from everything seen</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Scans all captured bodies and headers for API keys, cloud keys, tokens, emails, and card numbers (card numbers checksum-validated), quarantining hits separately until a human confirms them.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">The loot pass — the keys and tokens an attacker exfiltrates, often the pivot into the next system. One leaked cloud key can end the engagement in your favor.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="top"><span class="name">Report generator</span><span class="for">turning the run into an operator deliverable</span></div>
+    <div class="row how"><div class="k">How</div><div class="v">Reads all findings from the shared store, ranks by severity, and renders impact + repro steps + remediation into a client-ready document.</div></div>
+    <div class="row rt"><div class="k">Red team</div><div class="v">The part operators hate becomes free — consistent, prioritized evidence straight out of the engagement. More time attacking, less time writing up.</div></div>
+  </div>
+
+  <div class="tie">
+    <b>The thread:</b> every tool reads and writes <b>one shared store</b>, and they run in <b>attacker order</b> — so each tool's output becomes the next tool's input. That chaining is the capability a bag of separate tools can't reproduce.
+  </div>
+
+  <footer>ReconToReport · toolchain · pairs with script.html · stall_kit.html · pitch.html · poster.html · STUDY_GUIDE.md</footer>
+</div>
+</body>
+</html>
