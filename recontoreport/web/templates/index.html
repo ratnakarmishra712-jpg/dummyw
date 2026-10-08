@@ -80,6 +80,23 @@
   /* blast radius */
   #blast svg{width:100%;height:320px;display:block}
   #blast .leg{font-size:.72rem;color:var(--mut);margin-top:6px}
+  /* attack matrix */
+  .matrix{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:start}
+  .mcol{background:var(--panel2);border:1px solid var(--bd);border-radius:10px;padding:8px;min-height:70px}
+  .mcol.lit{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+  .mcol .mt{font-size:.58rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:7px;min-height:22px}
+  .mcol.lit .mt{color:var(--red)}
+  .mcell{background:#000;border:1px solid var(--bd);border-radius:6px;padding:5px 6px;margin-bottom:5px;font-size:.66rem}
+  .mcell.hit{border-color:var(--red);background:rgba(255,77,77,.12)}
+  .mcell a{color:var(--fg);text-decoration:none}.mcell .tid{color:var(--red);font-family:ui-monospace,monospace;font-size:.62rem}
+  .mcol .none{font-size:.6rem;color:var(--bd)}
+  .nm{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .nmcard{border:1px solid var(--blue);border-radius:11px;padding:13px 15px;background:linear-gradient(180deg,rgba(91,140,255,.08),transparent)}
+  .nmcard .tid{font-family:ui-monospace,monospace;font-size:.66rem;color:var(--blue)}
+  .nmcard .nn{font-weight:800;font-size:.95rem;margin:3px 0 5px}
+  .nmcard .wy{font-size:.8rem;color:var(--mut);line-height:1.45}
+  .nmcard .af{font-size:.62rem;color:var(--mut);margin-top:7px;text-transform:uppercase;letter-spacing:.06em}
+  @media(max-width:860px){.matrix{grid-template-columns:repeat(2,1fr)}}
   /* form */
   label{display:block;font-weight:700;font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;color:var(--green);margin:14px 0 5px}
   input[type=text],input[type=password],textarea,select{width:100%;padding:10px 12px;background:#000;color:var(--fg);border:1px solid var(--bd);border-radius:8px;font-size:.9rem;font-family:inherit}
@@ -112,6 +129,7 @@
     <nav class="nav">
       <a data-view="dash" class="active"><span class="ic">◧</span> Dashboard</a>
       <a data-view="scan"><span class="ic">▸</span> New scan</a>
+      <a data-view="attack"><span class="ic">⛬</span> ATT&CK</a>
       <a data-view="reports"><span class="ic">▤</span> Reports</a>
     </nav>
   </aside>
@@ -193,6 +211,23 @@
         <div class="card" style="max-width:720px;margin-top:16px"><h3>Live log</h3><pre id="plog">—</pre></div>
       </section>
 
+      <!-- ATT&CK -->
+      <section id="view-attack" class="hide">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Kill-chain coverage</h3>
+            <a id="navDl" class="report hide" style="font-size:.72rem;padding:8px 14px">⬇ Navigator layer (.json)</a>
+          </div>
+          <div class="hint" style="margin-bottom:10px">Techniques achieved, laid out along the kill chain. Export opens in the official MITRE ATT&CK Navigator.</div>
+          <div id="atkMatrix"><div class="empty">Run a scan to populate the matrix.</div></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Likely next moves</h3>
+          <div class="hint" style="margin-bottom:10px">Given what the attacker has already achieved, these are the techniques they'd most plausibly attempt next.</div>
+          <div id="nextMoves"><div class="empty">Run a scan to see predicted next steps.</div></div>
+        </div>
+      </section>
+
       <!-- REPORTS -->
       <section id="view-reports" class="hide">
         <div class="card">
@@ -209,9 +244,10 @@
 <script>
 const SEV=["critical","high","medium","low","info"];
 function show(v){
-  for(const s of ['dash','scan','reports']) document.getElementById('view-'+s).classList.toggle('hide',s!==v);
+  for(const s of ['dash','scan','attack','reports']) document.getElementById('view-'+s).classList.toggle('hide',s!==v);
   document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
-  document.getElementById('topTitle').textContent={dash:'Dashboard',scan:'New scan',reports:'Reports'}[v];
+  document.getElementById('topTitle').textContent={dash:'Dashboard',scan:'New scan',attack:'ATT&CK',reports:'Reports'}[v];
+  if(v==='attack'&&CURRENT)loadAttack(CURRENT);
 }
 document.querySelectorAll('.nav a').forEach(a=>a.onclick=()=>show(a.dataset.view));
 
@@ -337,6 +373,24 @@ function renderBlast(nodes){
     <text x="${cx}" y="${cy+26}" fill="var(--mut)" font-size="10" text-anchor="middle">TARGET</text></svg>
     <div class="leg">● <span style="color:var(--red)">${hits} compromised</span> / ${sl.length} reachable assets</div>`;
 }
+async function loadAttack(id){
+  const d=await (await fetch('/attack/'+id)).json();
+  const dl=document.getElementById('navDl');
+  if(d.has_findings){dl.href='/navigator/'+id;dl.classList.remove('hide');}else{dl.classList.add('hide');}
+  const m=document.getElementById('atkMatrix');
+  if(!d.has_findings){m.innerHTML='<div class="empty">No techniques achieved in this scan.</div>';
+    document.getElementById('nextMoves').innerHTML='<div class="empty">Nothing to predict yet.</div>';return;}
+  m.innerHTML='<div class="matrix">'+d.coverage.map(c=>{
+    const lit=c.techniques.length>0;
+    const cells=lit?c.techniques.map(t=>`<div class="mcell hit"><a href="${t.url}" target="_blank"><span class="tid">${t.id}</span><br>${t.name}</a></div>`).join('')
+                    :'<div class="none">—</div>';
+    return `<div class="mcol ${lit?'lit':''}"><div class="mt">${c.tactic}</div>${cells}</div>`;}).join('')+'</div>';
+  const nm=document.getElementById('nextMoves');
+  nm.innerHTML=d.next_moves.length?'<div class="nm">'+d.next_moves.map(n=>
+    `<div class="nmcard"><span class="tid">${n.id}</span><div class="nn"><a href="${n.url}" target="_blank" style="color:var(--fg);text-decoration:none">${n.name}</a></div>
+      <div class="wy">${n.why}</div><div class="af">after ${n.after}</div></div>`).join('')+'</div>'
+    :'<div class="empty">No obvious next move from what was achieved.</div>';
+}
 let REPLAY_T=[];
 function replay(){
   REPLAY_T.forEach(clearTimeout);REPLAY_T=[];
@@ -362,7 +416,7 @@ async function poll(id){
   const ts=document.getElementById('topStatus');
   if(s.status==='running'){ts.textContent='running';setTimeout(()=>poll(id),1500);}
   else{ts.textContent=s.status==='done'?'done':'error';document.getElementById('go').disabled=false;
-    loadFindings(id);loadHistory();
+    loadFindings(id);loadAttack(id);loadHistory();
     if(s.has_report){const a=document.getElementById('reportLink');a.href='/report/'+id;a.classList.remove('hide');}}
 }
 async function loadHistory(){

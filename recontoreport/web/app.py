@@ -14,9 +14,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlparse
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, Response, jsonify, request, send_file
 
 from ..attack import attack_for, attacker_story, build_attack_path
+from ..navigator import coverage as atk_coverage, navigator_layer, next_moves
 from ..scoring import grade as security_grade
 from ..config import (
     AuthRole,
@@ -278,6 +279,43 @@ def create_app() -> Flask:
                         "grade": security_grade(counts),
                         "story": attacker_story(plain),
                         "blast": blast})
+
+    def _run_findings(run_id):
+        """(target_url, [findings]) for a run, read from its DB. [] if none."""
+        import sqlite3
+        safe = "".join(c for c in run_id if c.isalnum() or c in "-_")
+        db = DATA_DIR / safe / "scan.db"
+        if not db.is_file():
+            return "", []
+        con = sqlite3.connect(db); con.row_factory = sqlite3.Row
+        try:
+            target = con.execute("SELECT url FROM targets LIMIT 1").fetchone()
+            rows = con.execute("SELECT title,severity,cwe_id,tool_source FROM findings").fetchall()
+            fs = [{"title": r["title"], "severity": r["severity"], "cwe_id": r["cwe_id"],
+                   "tool_source": r["tool_source"]} for r in rows]
+        finally:
+            con.close()
+        return (target[0] if target else ""), fs
+
+    @app.get("/attack/<run_id>")
+    def attack(run_id):  # noqa: ANN202
+        _, fs = _run_findings(run_id)
+        return jsonify({
+            "coverage": atk_coverage(fs),
+            "next_moves": next_moves(fs),
+            "has_findings": bool(fs),
+        })
+
+    @app.get("/navigator/<run_id>")
+    def navigator(run_id):  # noqa: ANN202
+        import json
+        target, fs = _run_findings(run_id)
+        layer = navigator_layer(fs, target)
+        return Response(
+            json.dumps(layer, indent=2),
+            mimetype="application/json",
+            headers={"Content-Disposition": f'attachment; filename="r2r-navigator-{run_id}.json"'},
+        )
 
     def _serve_disk_report(run_id):
         safe = "".join(c for c in run_id if c.isalnum() or c in "-_")
