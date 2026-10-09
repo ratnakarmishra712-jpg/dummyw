@@ -1,6 +1,6 @@
 API_KEY=sk-test-1234567890abcdef1234567890
 
 
-STRIPE_KEY=sk_test_aB3dE5fG7hJ9kL2mN4
-
+  
+STRIPE_SECRET_KEY=sk_live_aB3dE5fG7hJ9kL2mN4pQ
 
