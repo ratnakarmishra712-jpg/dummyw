@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReconToReport — Full Rehearsal</title>
+<style>
+  :root{--bg:#0a0a0c;--panel:#121216;--panel2:#17171c;--fg:#f1f1f3;--mut:#8a8a93;--bd:#262630;
+    --green:#38e07a;--yellow:#f2c200;--red:#ff4d4d;--blue:#5b8cff;--purple:#b14cff;}
+  *{box-sizing:border-box}html,body{margin:0;background:#000}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .page{width:1000px;max-width:100%;margin:24px auto;background:var(--bg);color:var(--fg);
+    font-family:"Helvetica Neue",Arial,sans-serif;border:1px solid var(--bd);
+    background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:5px 5px;
+    padding:38px 42px 34px}
+  .brand{font-size:.85rem;font-weight:900;letter-spacing:-.02em;color:var(--mut)}.brand b{color:var(--green)}
+  .kicker{font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;color:var(--green);margin-top:4px}
+  h1{font-size:1.75rem;font-weight:900;letter-spacing:-.02em;margin:10px 0 2px}
+  .lede{color:var(--mut);font-size:.9rem;margin-bottom:4px}
+  .part{font-size:.7rem;text-transform:uppercase;letter-spacing:.2em;color:#000;background:var(--green);
+    display:inline-block;padding:5px 12px;border-radius:999px;font-weight:900;margin:34px 0 4px}
+  h2{font-size:1.02rem;font-weight:800;margin:20px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--bd)}
+  h2 .t{font-size:.66rem;color:var(--mut);font-weight:700;float:right;letter-spacing:.05em}
+  p{margin:0 0 10px;line-height:1.58;font-size:.93rem;color:#dcdce0}
+  .say{background:var(--panel);border-left:3px solid var(--green);border-radius:0 10px 10px 0;
+    padding:13px 16px;margin:9px 0;font-size:.96rem;line-height:1.6;color:#ececf0}
+  .say b{color:var(--green)}.say i{color:#fff;font-style:italic}
+  .dir{color:var(--yellow);font-size:.76rem;font-weight:700;letter-spacing:.04em;margin:12px 0 4px}
+  .dir::before{content:"▸ "}
+  ol.steps{margin:6px 0;padding-left:20px}ol.steps li{font-size:.9rem;line-height:1.5;margin-bottom:8px;color:#dcdce0}
+  ol.steps li b{color:#fff}
+  .qa{border-left:3px solid var(--bd);padding:4px 0 4px 15px;margin:13px 0}
+  .qa.hot{border-left-color:var(--red)}
+  .q{font-weight:800;font-size:.93rem;margin:0 0 6px;color:var(--fg)}
+  .q::before{content:"Q  ";color:var(--green);font-family:ui-monospace,monospace}
+  .a{font-size:.89rem;line-height:1.55;color:#cfcfd6;margin:0}
+  .a::before{content:"A  ";color:var(--blue);font-family:ui-monospace,monospace;font-weight:700}
+  .tag{display:inline-block;background:#000;border:1px solid var(--red);color:var(--red);border-radius:4px;
+    padding:1px 7px;font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+  .note{background:#000;border:1px solid var(--yellow);border-radius:10px;padding:13px 16px;font-size:.87rem;color:#e6e0c8;line-height:1.5;margin-top:8px}
+  .note b{color:var(--yellow)}
+  .time{color:var(--mut);font-size:.72rem}
+  footer{margin-top:28px;color:var(--mut);font-size:.68rem;border-top:1px solid var(--bd);padding-top:12px;text-align:center}
+  @media print{html,body{background:#fff}.page{border:none;margin:0;background:#fff;color:#111}
+    p,.a,ol.steps li{color:#1a1a1a}.say,.note{background:#fff}.part{color:#fff}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">RECON<b>//</b>REPORT</div>
+  <div class="kicker">Full rehearsal · talk · live demo · mock viva</div>
+  <h1>Dress rehearsal — run it end to end</h1>
+  <div class="lede">Practise out loud. <span class="mono">[yellow]</span> = stage direction (not spoken). Green blocks = say roughly this, in your own words.</div>
+
+  <!-- PART 1 -->
+  <div class="part">Part 1 · The talk (~3 min)</div>
+
+  <h2>Hook <span class="t">~30s · hands off keyboard</span></h2>
+  <div class="say">"Most security tools run a <i>vulnerability scan</i> — they fingerprint a target and hand you a
+  checklist of weaknesses. But a list of weaknesses isn't an attack. A <b>red team</b> does something
+  different: it emulates a real threat actor — reconnaissance, a foothold, escalation, impact — and proves
+  how far an adversary could actually get. <b>ReconToReport automates that red-team workflow.</b> One web
+  address in; it runs the adversary's kill chain in order and produces the operator's report at the end.
+  Let me walk the kill chain — the <i>sequence</i> is the whole point."</div>
+
+  <h2>Beat 1 — Footprint the target <span class="t">Recon</span></h2>
+  <div class="say">"It opens the way an operator opens an engagement — reconnaissance. It passively enumerates
+  the org's other hosts from open-source intelligence, never touching their infrastructure, then maps the
+  live attack surface: every page, form and input, plus forgotten assets — backups, exposed source, unlinked
+  admin panels. By the end it holds the target map an adversary builds before making a move."</div>
+
+  <h2>Beat 2 — Establish a foothold <span class="t">Access</span></h2>
+  <div class="say">"Here it stops being a scanner. A scanner tests logged-out, as an anonymous stranger. Real
+  operators work from <i>inside</i>, as a valid account — and a low-privilege account is the cheapest foothold
+  there is: you register one, or phish, or reuse a leaked session. The tool authenticates and holds that
+  session, tagged with its privilege level. That shift from outsider to authenticated operator unlocks every
+  technique after it."</div>
+
+  <h2>Beat 3 — Find the way in, then escalate <span class="t">Scan</span></h2>
+  <div class="say">"With the map and a foothold it goes hunting. Part of this is the known-vulnerability sweep a
+  scanner does — so we're never behind on coverage. But then it runs a technique a scanner structurally
+  cannot: <b>privilege escalation</b>. Holding two identities at once, it asks whether a low-privilege account
+  can reach what should be staff-only — and when a throwaway user walks into an admin function, that's broken
+  access control, <i>proven</i>. It also confirms code execution by firing payloads in a live browser, and
+  audits the defensive posture the blue team relies on."</div>
+
+  <h2>Beat 4 — Weaponize &amp; prove impact <span class="t">Exploit</span></h2>
+  <div class="say">"An operator demonstrates impact, not just 'this looks weak.' It tests whether session
+  tokens can be forged — forge one and you impersonate any user. It drives injection into the database, the
+  path most real breaches run through. It reads files off the server, and checks whether the trusted domain
+  can be weaponized as a phishing redirect against its own users. Every hit is logged as repeatable proof."</div>
+
+  <h2>Beat 5 — Collect the loot, write the report <span class="t">Harvest + Report</span></h2>
+  <div class="say">"Then collection — the credentials, API keys and tokens an adversary would exfiltrate,
+  pulled from the captured traffic. And the operator deliverable: findings ranked by severity with impact and
+  fixes, a single <i>A-to-F grade</i>, a first-person 'this is how I compromised you' narrative, and every
+  finding mapped to its <b>MITRE ATT&amp;CK technique</b> on the kill chain — exported as a layer the client
+  opens in the official ATT&amp;CK Navigator. The whole engagement, from one web address."</div>
+
+  <h2>Close — the one point that wins <span class="t">~20s</span></h2>
+  <div class="say">"What separates this from pointing five tools at a target: every phase writes into
+  <b>one shared store</b>, so each technique builds on the last — the foothold feeds the escalation, the map
+  feeds the exploitation, the captured traffic feeds the collection. A scanner runs checks in isolation and
+  hands you disconnected findings. We run the adversary's <b>TTPs in kill-chain order, each feeding the
+  next</b> — so you don't get 'five weaknesses,' you get <i>the chained path a threat actor takes to
+  compromise</i>. That chaining is the thing a bag of tools can't reproduce."</div>
+
+  <!-- PART 2 -->
+  <div class="part">Part 2 · Live demo (~2 min)</div>
+
+  <h2>Choreography <span class="t">narrate each beat as it runs</span></h2>
+  <ol class="steps">
+    <li><b>Set up.</b> "Both tools against the identical target — here's the demo app." Start the bundled target, point R2R at it, hit run.</li>
+    <li><b>Narrate the kill chain</b> as phases fire — use the Beat lines above: "mapping the surface… now operating as two identities… now comparing what each can reach…" The live log paces you.</li>
+    <li><b>Land the knockout.</b> Stop on the broken-access-control finding: <i>"anonymous is denied, but the normal user reached the admin page — privilege escalation, proven, with a two-line repro."</i></li>
+    <li><b>Show the output.</b> Open the ATT&amp;CK page (kill-chain coverage + next moves + Navigator export) and the report with its A–F grade and attacker-story.</li>
+    <li><b>The line:</b> "Run your scanner on this same box — it won't produce that escalation finding, because it has no concept of who it's logged in as. We hold both identities and compare."</li>
+  </ol>
+  <div class="note"><b>If the demo breaks:</b> the header-audit, built-in SQLi and the access-control check run on the <i>local</i> target with nothing installed — that's why they exist. Worst case, narrate over the pre-generated report you opened in a spare tab. A phase erroring live is a feature: <i>"notice it kept going — one tool failing never kills the run."</i></div>
+
+  <!-- PART 3 -->
+  <div class="part">Part 3 · Mock viva — drill these out loud</div>
+
+  <h2>Architecture &amp; design</h2>
+  <div class="qa"><p class="q">Isn't this just a wrapper around existing tools?</p>
+  <p class="a">Deliberately — the contribution is the integration. One shared store lets a later tool act on
+  what an earlier one found, so you get a demonstrated chain, not five disconnected outputs. A bag of scripts
+  can't do that.</p></div>
+  <div class="qa"><p class="q">Why a shared database instead of piping tools together?</p>
+  <p class="a">Tools emit different formats; normalising into one schema means any phase can query any earlier
+  result, the report has one source of truth, and a new tool just writes to the same tables. It's the
+  integration layer.</p></div>
+  <div class="qa"><p class="q">What if a tool hangs or crashes mid-run?</p>
+  <p class="a">Each phase runs in try/except, each external call has a timeout; a failure is logged and recorded
+  as a phase result, then the run continues. One tool dying never kills the run.</p></div>
+  <div class="qa"><p class="q">How do you keep false positives down?</p>
+  <p class="a">Confidence levels per finding; XSS only high if it actually executed; the access-control finding
+  only fires on a genuine success the low-priv user shouldn't get; harvested secrets are quarantined until a
+  human promotes them.</p></div>
+
+  <h2>Tools — how they actually work</h2>
+  <div class="qa"><p class="q">Walk me through the privilege-escalation check.</p>
+  <p class="a">Three requests per protected page — anonymous, high-priv, low-priv — compared. It only fires
+  when anonymous is denied, the privileged user is allowed, and the low-priv user is <i>also</i> allowed:
+  gated, but the wrong person gets in. It needs two identities held at once, which is why a stateless scanner
+  can't do it.</p></div>
+  <div class="qa"><p class="q">How does the XSS check confirm, not guess?</p>
+  <p class="a">We inject a unique canary plus a small HTML tag into a parameter and render the page in a real
+  headless browser. If the tag comes back unescaped in the DOM, the app isn't encoding output — medium. If a
+  JavaScript dialog actually fires, our code executed — high. The real browser is what proves execution.</p></div>
+  <div class="qa"><p class="q">Explain the open-redirect check — and how does that help an attacker?</p>
+  <p class="a">We put an external address in redirect-style params and, without following the redirect, check
+  whether the server's 'go here next' points off-site. It helps an attacker because they craft a link on the
+  <i>trusted</i> domain — <span class="mono">bank.com/login?next=evil.com</span> — and phish it to a victim;
+  the victim trusts the real domain, clicks, and the site itself forwards them to the attacker's page. The
+  redirect launders the attacker's destination through a domain people and mail filters trust. Our tool only
+  detects the flaw; delivery is the attacker's own phishing.</p></div>
+  <div class="qa"><p class="q">Explain the path-traversal check.</p>
+  <p class="a">Where a parameter names a file, an attacker climbs out of the intended folder with
+  <span class="mono">../</span> sequences — <span class="mono">../../../../etc/passwd</span>. We inject that and
+  confirm the hit by the unmistakable <span class="mono">root:x:0:0</span> signature of that system file in the
+  response. A hit means arbitrary file read — configs, source, secrets.</p></div>
+  <div class="qa"><p class="q">Where do the CWE and ATT&CK numbers come from?</p>
+  <p class="a">CWEs are assigned by our checks and the template engine's metadata. For ATT&amp;CK, the technique
+  names and official URLs come from data distilled from MITRE's STIX bundle; <i>which</i> technique a CWE maps
+  to is our curated table of ~40 web weakness families — MITRE publishes no canonical CWE-to-technique map, so
+  it's a deliberate, auditable lookup.</p></div>
+
+  <h2>Security application of R2R</h2>
+  <div class="qa"><p class="q">How is this different from a vulnerability scanner?</p>
+  <p class="a">A scanner answers 'what's broken?' and hands you a list. R2R answers 'what could an attacker
+  chain together?' — it operates as an authenticated identity and proves escalation end-to-end, which a
+  stateless scanner architecturally cannot. We still run the scanner-style sweep, so we're never behind on
+  coverage.</p></div>
+  <div class="qa hot"><p class="q">If it's an attacker tool, how do you have credentials in the first place?<span class="tag">trap</span></p>
+  <p class="a">We don't need privileged creds. The finding is that a <i>normal</i> account — the kind anyone
+  self-registers, phishes or buys in seconds — reaches what it shouldn't. A low-priv foothold is the cheap,
+  everyday start of a real attack. Any admin session we hold is just a reference to confirm 'this page is
+  genuinely protected,' to kill false positives — not part of the attack.</p></div>
+  <div class="qa hot"><p class="q">Is the ATT&CK mapping real or made up?<span class="tag">trap</span></p>
+  <p class="a">The IDs, names and URLs are genuine MITRE identifiers from their official STIX bundle,
+  version-pinned, refreshable with one script. The only thing we author is which technique our finding types
+  map to, because no canonical source for that exists.</p></div>
+  <div class="qa"><p class="q">Could this be misused offensively?</p>
+  <p class="a">It only does pre-exploitation testing, every active phase is gated behind an explicit
+  authorization flag and scope rules, and it stops short of destructive actions — the same dual-use posture
+  as every pentest tool.</p></div>
+  <div class="qa"><p class="q">What are its limits? <span class="time">(say these before you're asked)</span></p>
+  <p class="a">Pre-exploitation adversary emulation for web apps — no command-and-control, no lateral movement
+  off-host, no evasion. It finds known patterns, not business-logic flaws, and the XSS check covers reflected/
+  DOM sinks on GET parameters, not stored XSS. Some findings still want manual confirmation. Owning the scope
+  is a credibility signal.</p></div>
+
+  <!-- PART 4 -->
+  <div class="part">Part 4 · If you blank</div>
+  <div class="note"><b>The 5 anchors:</b> (1) it's an orchestrator, not a new exploit; (2) the shared store is
+  the novelty — tools chain off each other; (3) flow = recon → foothold → escalate → exploit → collect →
+  report; (4) flagship = a normal account reaching admin-only, impossible for a stateless scanner; (5) honest
+  scope = pre-exploitation web emulation, some findings need manual confirmation.<br><br>
+  <b>Universal fallback when cornered on a detail:</b> answer at the mechanism level — "it sends <i>this</i>
+  and looks for <i>that</i> signature" — which is always true and never trips you up.</div>
+
+  <footer>ReconToReport · full rehearsal · pair with viva.html · script.html · toolchain.html · stall_kit.html</footer>
+</div>
+</body>
+</html>
