@@ -45,27 +45,86 @@ def _stix() -> dict:
         return {}
 
 
-def _classify(cwe: str, src: str) -> tuple[str, str]:
-    """Curated rule: (CWE / tool source) -> (technique_id, our kill-chain tactic).
+# Curated CWE -> (technique_id, our kill-chain tactic), covering the OWASP Top 10
+# / common web weakness families. MITRE publishes no canonical CWE→technique map
+# (CAPEC's ATT&CK coverage is sparse and skips the core web CWEs), so this is our
+# deliberate, auditable judgment layer. Technique NAMES/URLs still come from STIX.
+_CWE_MAP: dict[str, tuple[str, str]] = {
+    # --- Injection -> get code/queries running on the app --------------------
+    "CWE-89":  ("T1190", "Initial Access"),       # SQL injection
+    "CWE-564": ("T1190", "Initial Access"),       # ORM/HQL injection
+    "CWE-943": ("T1190", "Initial Access"),       # NoSQL / data-query injection
+    "CWE-77":  ("T1059", "Execution"),            # command injection
+    "CWE-78":  ("T1059", "Execution"),            # OS command injection
+    "CWE-94":  ("T1059", "Execution"),            # code injection
+    "CWE-95":  ("T1059", "Execution"),            # eval injection
+    "CWE-98":  ("T1505.003", "Execution"),        # PHP file inclusion -> web shell
+    "CWE-502": ("T1059", "Execution"),            # insecure deserialization (RCE)
+    "CWE-611": ("T1083", "Credential Access"),    # XXE -> file read
+    "CWE-1336": ("T1059", "Execution"),           # template injection (SSTI)
+    # --- XSS / client-side execution ----------------------------------------
+    "CWE-79":  ("T1059.007", "Execution"),        # XSS
+    "CWE-80":  ("T1059.007", "Execution"),
+    "CWE-83":  ("T1059.007", "Execution"),
+    # --- Broken access control / privilege -----------------------------------
+    "CWE-285": ("T1548", "Privilege Escalation"), # improper authorization
+    "CWE-862": ("T1548", "Privilege Escalation"), # missing authorization
+    "CWE-863": ("T1548", "Privilege Escalation"), # incorrect authorization
+    "CWE-639": ("T1548", "Privilege Escalation"), # IDOR
+    "CWE-266": ("T1548", "Privilege Escalation"), # incorrect privilege assignment
+    "CWE-269": ("T1548", "Privilege Escalation"), # improper privilege management
+    # --- Authentication -> valid accounts / foothold -------------------------
+    "CWE-287": ("T1078", "Initial Access"),       # improper authentication
+    "CWE-306": ("T1190", "Initial Access"),       # missing auth for critical function
+    "CWE-798": ("T1552", "Credential Access"),    # hardcoded credentials
+    "CWE-521": ("T1078", "Initial Access"),       # weak password requirements
+    # --- Tokens / session / crypto material ----------------------------------
+    "CWE-347": ("T1550.001", "Credential Access"),# improper signature verification (JWT)
+    "CWE-345": ("T1550.001", "Credential Access"),
+    "CWE-290": ("T1550.001", "Credential Access"),# auth bypass by spoofing
+    "CWE-613": ("T1550.001", "Credential Access"),# insufficient session expiry
+    "CWE-384": ("T1550", "Credential Access"),    # session fixation
+    "CWE-326": ("T1550.001", "Credential Access"),# weak crypto strength
+    # --- Exposed data / secrets ---------------------------------------------
+    "CWE-538": ("T1552", "Credential Access"),    # file/dir exposure
+    "CWE-540": ("T1552", "Credential Access"),    # source code exposure
+    "CWE-615": ("T1552", "Credential Access"),    # info in comments
+    "CWE-200": ("T1213", "Credential Access"),    # information exposure
+    # --- File read / traversal ----------------------------------------------
+    "CWE-22":  ("T1083", "Credential Access"),    # path traversal
+    "CWE-23":  ("T1083", "Credential Access"),
+    "CWE-36":  ("T1083", "Credential Access"),
+    # --- Redirect / request forgery -----------------------------------------
+    "CWE-601": ("T1566", "Initial Access"),       # open redirect -> phishing
+    "CWE-352": ("T1204", "Execution"),            # CSRF -> forced user action
+    "CWE-918": ("T1190", "Initial Access"),       # SSRF
+}
 
-    This is the judgment layer. MITRE has no CWE→technique map, so we own it.
+# tool-source hints (for findings with no / vague CWE).
+_SRC_MAP: list[tuple[tuple[str, ...], tuple[str, str]]] = [
+    (("sqli", "sqlmap"), ("T1190", "Initial Access")),
+    (("xss",), ("T1059.007", "Execution")),
+    (("privesc",), ("T1548", "Privilege Escalation")),
+    (("jwt",), ("T1550.001", "Credential Access")),
+    (("traversal", "lfi"), ("T1083", "Credential Access")),
+    (("redirect",), ("T1566", "Initial Access")),
+    (("secret", "ffuf"), ("T1552", "Credential Access")),
+    (("header", "cors"), ("T1595", "Reconnaissance")),
+    (("nuclei",), ("T1190", "Initial Access")),
+]
+
+
+def _classify(cwe: str, src: str) -> tuple[str, str]:
+    """(CWE / tool source) -> (technique_id, our kill-chain tactic).
+
+    CWE is authoritative when we recognise it; otherwise fall back to the tool
+    that produced the finding; otherwise default to reconnaissance.
     """
-    if cwe == "CWE-89" or "sqli" in src or "sqlmap" in src:
-        return "T1190", "Initial Access"
-    if cwe == "CWE-79" or "xss" in src:
-        return "T1059.007", "Execution"
-    if cwe == "CWE-285" or "privesc" in src:
-        return "T1548", "Privilege Escalation"
-    if cwe in ("CWE-347", "CWE-326", "CWE-613") or "jwt" in src:
-        return "T1550.001", "Credential Access"
-    if cwe == "CWE-538" or "secret" in src or "ffuf" in src:
-        return "T1552", "Credential Access"
-    if cwe == "CWE-22" or "traversal" in src or "lfi" in src:
-        return "T1083", "Credential Access"
-    if cwe == "CWE-601" or "redirect" in src:
-        return "T1566", "Initial Access"
-    if "nuclei" in src:
-        return "T1190", "Initial Access"
+    if cwe in _CWE_MAP:
+        return _CWE_MAP[cwe]
+    for needles, result in _SRC_MAP:
+        if any(n in src for n in needles):
+            return result
     return "T1595", "Reconnaissance"
 
 
