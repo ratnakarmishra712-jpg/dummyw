@@ -53,94 +53,89 @@
   <div class="brand">RECON<b>//</b>REPORT</div>
   <div class="kicker">Presentation script · say it out loud · [brackets] = stage direction, not spoken</div>
   <h1>The walkthrough</h1>
-  <div class="lede">One story, start to finish. Privesc is one beat of five — the whole pipeline carries the pitch.</div>
+  <div class="lede">The adversary-emulation walkthrough — one engagement, in kill-chain order, in red-team language.</div>
 
   <!-- OPEN -->
   <div class="open">
     <span class="dir">▸ Open — don't touch the keyboard yet</span>
-    <p class="say">"Quick question before I start — how do you normally find out if a website is secure?
-    Most tools act like a <i>home inspector</i>: they walk around, rattle the doors, and hand you a
-    checklist of weak spots. Useful, but it's just a list.<br><br>
-    ReconToReport works more like a <i>burglar</i>. You give it one thing — a web address — and it does
-    what a real attacker would actually do, in order: it scouts the place, finds a way in, tries to get
-    further than it should, proves what it could steal, and then writes the whole thing up as a report.
-    Automatically.<br><br>
-    Let me walk you through how it thinks — because the <i>order</i> is the whole point."</p>
+    <p class="say">"Most security tools run a <i>vulnerability scan</i> — they fingerprint the target and hand
+    you a checklist of weaknesses. Useful, but a list of weaknesses isn't an attack.<br><br>
+    A <i>red team</i> does something different: it emulates a real threat actor — reconnaissance, a foothold,
+    escalation, impact — and proves how far an adversary could actually get. ReconToReport <i>automates that
+    red-team workflow</i>. One web address in; it runs the adversary's playbook in order and produces the
+    operator's report at the end.<br><br>
+    Let me walk you through the kill chain — because the <i>sequence</i> is the whole point."</p>
   </div>
 
   <!-- BEAT 1 -->
   <div class="beat b1">
-    <span class="tab"><span class="dot"></span>Beat 1 — "First, it scouts."<span class="ph">Recon</span></span>
-    <p class="say">"It starts exactly where an attacker starts — mapping the target. It quietly looks up
-    other addresses the company owns, without ever touching their servers — just public records. Then it
-    crawls the actual site like a browser, noting every page, every form, every place you can type
-    something in. And it hunts for the stuff nobody meant to leave lying around — forgotten backup files,
-    admin pages that aren't linked anywhere. By the end it has a <i>map</i> — the same one a burglar sketches
-    before going in."</p>
+    <span class="tab"><span class="dot"></span>Beat 1 — "Footprint the target."<span class="ph">Recon</span></span>
+    <p class="say">"It opens the way an operator opens an engagement — reconnaissance. It passively enumerates
+    the organisation's other hosts from open-source intelligence, never touching their infrastructure. Then
+    it maps the live attack surface: crawling the app, cataloguing every page, form and input, and hunting
+    the forgotten assets operators love — backup files, exposed source, unlinked admin panels. By the end it
+    holds the target map an adversary builds before making a move."</p>
   </div>
 
   <!-- BEAT 2 -->
   <div class="beat b2">
-    <span class="tab"><span class="dot"></span>Beat 2 — "Then it becomes a user."<span class="ph">Access</span></span>
-    <p class="say">"Here's where it stops being a scanner. Most tools test a site logged-out, as a stranger.
-    But real attacks happen from <i>inside</i> — as someone with an account. And a normal account is the
-    easiest thing in the world to get: on most sites you just <i>sign up</i> for one.<br><br>
-    So the tool logs in the way a real person would, and holds that session — it's now browsing as an
-    actual user, not an anonymous outsider. That one shift is what unlocks everything after it."</p>
+    <span class="tab"><span class="dot"></span>Beat 2 — "Establish a foothold."<span class="ph">Access</span></span>
+    <p class="say">"Here's where it stops being a scanner. A scanner tests logged-out, as an anonymous stranger.
+    Real operators work from <i>inside</i> — as a valid account. And a low-privilege account is the cheapest
+    foothold there is: on most apps you simply <i>register</i> one, or you phish or reuse a leaked session.<br><br>
+    So the tool authenticates and holds that session, tagged with its privilege level — it's now operating as
+    a real identity on the inside. That shift from outsider to authenticated operator is what unlocks every
+    technique after it."</p>
   </div>
 
   <!-- BEAT 3 -->
   <div class="beat b3">
-    <span class="tab"><span class="dot"></span>Beat 3 — "Now it looks for the ways in."<span class="ph">Scan</span></span>
-    <p class="say">"With that map and that login, it goes hunting for weaknesses. Some of this is the standard
-    sweep every scanner does — checking for known, publicly-documented flaws — and we do that too, so we're
-    never <i>behind</i> an ordinary scanner.<br><br>
-    But then it does something a scanner can't. Because it's logged in as a user, it can ask: <i>is there
-    anything this ordinary account can reach that it shouldn't?</i> — like a regular customer opening the
-    staff-only admin area. If a nobody-account can walk into a restricted room, that's serious, and the tool
-    proves it rather than guessing.<br><br>
-    It also checks for the classic 'inject code into the page' attacks — but instead of guessing, it loads
-    the page in a real browser and watches whether the attack actually <i>fires</i>. Confirmed, not assumed.
-    And it audits the site's defensive posture — the security headers and sharing rules that are supposed to
-    protect your users — flagging the ones that are missing or wide open."</p>
+    <span class="tab"><span class="dot"></span>Beat 3 — "Find the way in, then escalate."<span class="ph">Scan</span></span>
+    <p class="say">"With the map and a foothold, it goes hunting. Part of this is the known-vulnerability sweep a
+    scanner does — so we're never <i>behind</i> on coverage.<br><br>
+    But then it runs a technique a scanner structurally cannot: privilege escalation testing. Holding two
+    identities at once, it asks whether a low-privilege account can reach what should be restricted to staff
+    — and when a throwaway user walks into an admin-only function, that's broken access control, proven, not
+    guessed. That's the escalation step of a real intrusion.<br><br>
+    It also confirms client-side code execution by firing the payload in a live browser — weaponizable, not a
+    'maybe' — and audits the target's defensive posture, the headers and trust rules a defender is relying on."</p>
   </div>
 
   <!-- BEAT 4 -->
   <div class="beat b4">
-    <span class="tab"><span class="dot"></span>Beat 4 — "Then it proves impact."<span class="ph">Exploit</span></span>
-    <p class="say">"Finding a weakness is one thing; showing it's real is another. So it safely confirms the
-    big ones. It checks whether the login tokens the site hands out can be forged — because a forgeable
-    token means impersonating anyone. And it probes the input fields for database injection — the classic
-    'type a quote and watch the database spill an error' — which is how real breaches start. It tries to
-    read files straight off the server, and it checks whether the site can be turned into a phishing lure
-    that bounces your users to an attacker's page. Where it finds one, it records a concrete, repeatable proof."</p>
+    <span class="tab"><span class="dot"></span>Beat 4 — "Weaponize and prove impact."<span class="ph">Exploit</span></span>
+    <p class="say">"An operator doesn't stop at 'this looks weak' — they demonstrate impact. So it safely validates
+    the high-value techniques. It tests whether the app's session tokens can be forged — forge one and you
+    impersonate any user, including an admin. It drives injection into the database, the path most real
+    breaches run through. It attempts to read files straight off the server, and it checks whether the trusted
+    domain can be weaponized as a phishing redirect against its own users. Every hit is logged as concrete,
+    repeatable proof — the evidence an engagement is judged on."</p>
   </div>
 
   <!-- BEAT 5 -->
   <div class="beat b5">
-    <span class="tab"><span class="dot"></span>Beat 5 — "Finally, it collects and writes it up."<span class="ph">Harvest + Report</span></span>
-    <p class="say">"Everything an attacker would grab on the way out — exposed passwords, API keys, anything
-    sensitive that leaked into the traffic — it gathers into one place. Then it does the part humans hate
-    most: it writes the report. Every finding ranked by danger, with the business impact and exactly how to
-    fix it. It boils the whole thing down to a single <i>security grade, A to F</i>, writes a plain-English
-    'here's how I'd break in' summary, and lays every technique onto the MITRE ATT&amp;CK kill chain — even
-    exporting a file your client can open in the official ATT&amp;CK tool. Client-ready — from that one web
-    address you started with."</p>
+    <span class="tab"><span class="dot"></span>Beat 5 — "Collect the loot, write the report."<span class="ph">Harvest + Report</span></span>
+    <p class="say">"Then the collection phase — everything an adversary would exfiltrate on the way out:
+    credentials, API keys, cloud tokens, anything sensitive that leaked into the captured traffic. And
+    finally the operator deliverable: every finding ranked by severity with impact and remediation, boiled
+    down to a single <i>A-to-F grade</i>, a first-person 'this is how I compromised you' narrative, and every
+    finding mapped to its <i>MITRE ATT&amp;CK technique</i> and laid onto the kill chain — exported as a layer
+    your client opens in the official ATT&amp;CK Navigator. The whole engagement, from one web address."</p>
   </div>
 
   <!-- CLOSE -->
   <div class="close">
     <span class="dir">▸ Close — the real point</span>
-    <p class="say">"Now — here's what makes this different from pointing five separate tools at a site.
-    Every step writes into <span class="punch">one shared memory</span>. The login from step two gets
-    <i>used</i> by the test in step three. The pages mapped in step one are what step four attacks. The
-    traffic captured along the way is what gets mined at the end.<br><br>
-    A bag of tools runs each check in isolation and hands you five disconnected lists. We run them
-    <span class="punch">in attacker order, feeding each other</span> — so instead of 'here are five
-    problems,' you get 'here's how someone chains them into an actual break-in.'<br><br>
-    And to be straight: this covers the scouting-to-access part of an attack — the part you <i>can</i>
-    automate. It won't replace a human for business-logic flaws, and some findings still want a person to
-    confirm. But for turning one URL into a real, prioritized picture of your risk, in minutes — that's
+    <p class="say">"Here's what separates this from pointing five tools at a target. Every phase writes into
+    <span class="punch">one shared store</span>, so each technique builds on the last: the foothold from
+    Beat 2 is what the escalation in Beat 3 uses; the surface mapped in Beat 1 is what Beat 4 exploits; the
+    traffic seen along the way is what the collection phase mines.<br><br>
+    A vulnerability scanner runs each check in isolation and hands you disconnected findings. We run the
+    <span class="punch">adversary's TTPs in kill-chain order, each feeding the next</span> — so you don't get
+    'here are five weaknesses,' you get 'here is the chained path a threat actor takes to compromise.'<br><br>
+    Straight about scope: this is <i>pre-exploitation adversary emulation</i> for web apps — no command-and-control,
+    no lateral movement off-host, no evasion, and business-logic flaws still need a human operator. But for
+    automating the recon-to-foothold-to-escalation workflow and producing the operator's report — that's exactly
     what it does."</p>
   </div>
 
@@ -155,11 +150,11 @@
 
   <div class="cut">
     <span class="dir">▸ The 60-second cut (memorize this)</span>
-    <p class="say">"Most security tools are a home inspector — they hand you a checklist. Ours is a burglar:
-    give it a web address and it scouts the site, logs in like a normal user, finds what that user can
-    reach but shouldn't, proves what it could steal, and writes the report — automatically. The trick is
-    it runs every step in <i>attacker order</i>, each one feeding the next off one shared memory, so you
-    don't get five disconnected problems — you get the actual chain of a break-in."</p>
+    <p class="say">"A vulnerability scan hands you a checklist of weaknesses. We automate the <i>red-team
+    workflow</i> instead: give it a web address and it runs the adversary's kill chain — recon, a foothold as
+    a real account, privilege escalation, proven impact, collection — then writes the operator's report,
+    mapped to MITRE ATT&amp;CK. Because every technique feeds the next off one shared store, you don't get five
+    disconnected findings — you get the chained path a threat actor takes to compromise."</p>
   </div>
 
   <footer>ReconToReport · presentation script · pair with stall_kit.html · pitch.html · poster.html · STUDY_GUIDE.md</footer>
