@@ -61,6 +61,11 @@ done
 echo "==> download source fallbacks (for any platform a wheel was missing)"
 python3 -m pip download "${PKGS[@]}" --no-binary=:all: -d "$WHEELS" >/dev/null 2>&1 || true
 
+echo "==> fetch external CLIs (subfinder/ffuf/nuclei/sqlmap) unless R2R_SKIP_TOOLS=1"
+if [ "${R2R_SKIP_TOOLS:-0}" != "1" ]; then
+  bash "$ROOT/scripts/fetch_tools.sh" "$OUT" || echo "   (tools fetch had problems; core still works)"
+fi
+
 echo "==> write installers + README"
 cat > "$OUT/install.sh" <<'SH'
 #!/usr/bin/env bash
@@ -75,10 +80,29 @@ echo "Creating virtual environment (.venv)…"
 python -m pip install --upgrade pip --no-index --find-links wheels >/dev/null 2>&1 || true
 echo "Installing ReconToReport from the bundled wheels (offline)…"
 pip install --no-index --find-links wheels "recontoreport[ui,scan]"
+
+# Wire the bundled external CLIs onto PATH (venv bin), if present for this host.
+BIN=".venv/bin"
+OS=$(uname -s); ARCH=$(uname -m)
+case "$OS" in Linux) o=linux;; Darwin) o=macos;; *) o=;; esac
+case "$ARCH" in x86_64|amd64) a=amd64;; arm64|aarch64) a=arm64;; *) a=;; esac
+KEY="$o-$a"
+if [ -n "$o" ] && [ -d "tools/$KEY" ]; then
+  echo "Installing external tools for $KEY…"
+  cp tools/$KEY/* "$BIN"/ 2>/dev/null || true
+  chmod +x "$BIN"/subfinder "$BIN"/ffuf "$BIN"/nuclei 2>/dev/null || true
+fi
+if [ -f tools/sqlmap/sqlmap.py ]; then
+  # sqlmap is pure-Python; expose a 'sqlmap' command that runs the bundled copy.
+  SQLMAP_DIR="$(cd tools/sqlmap && pwd)"
+  printf '#!/usr/bin/env bash\nexec "%s" "%s/sqlmap.py" "$@"\n' "$PY" "$SQLMAP_DIR" > "$BIN/sqlmap"
+  chmod +x "$BIN/sqlmap"
+fi
 echo
 echo "Done.  Activate it with:   source .venv/bin/activate"
 echo "Then run the UI:           r2r ui"
 echo "Or a CLI scan:             r2r scan --url http://TARGET --i-have-authorization"
+echo "Bundled tools (if shown above) are active while the venv is activated."
 SH
 chmod +x "$OUT/install.sh"
 
@@ -93,6 +117,17 @@ Write-Host "Creating virtual environment (.venv)…"
 & .\.venv\Scripts\python.exe -m pip install --upgrade pip --no-index --find-links wheels 2>$null
 Write-Host "Installing ReconToReport from the bundled wheels (offline)…"
 & .\.venv\Scripts\pip.exe install --no-index --find-links wheels "recontoreport[ui,scan]"
+
+# Wire the bundled Windows CLIs + a sqlmap shim into the venv Scripts dir.
+$bin = ".\.venv\Scripts"
+if (Test-Path "tools\windows-amd64") {
+  Write-Host "Installing external tools for windows-amd64…"
+  Copy-Item "tools\windows-amd64\*" $bin -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path "tools\sqlmap\sqlmap.py") {
+  $sq = (Resolve-Path "tools\sqlmap\sqlmap.py").Path
+  "@echo off`r`npython `"$sq`" %*" | Out-File -Encoding ascii "$bin\sqlmap.bat"
+}
 Write-Host ""
 Write-Host "Done.  Activate it with:   .\.venv\Scripts\Activate.ps1"
 Write-Host "Then run the UI:           r2r ui"
@@ -124,11 +159,19 @@ WHAT'S INCLUDED
   privilege-escalation diff, security-header/CORS audit, open-redirect,
   path-traversal, secret harvesting, the report, the A–F grade, and the
   MITRE ATT&CK mapping.
+  ALSO the external CLIs — subfinder, ffuf, nuclei (binaries for Linux/Windows/
+  macOS, x64 + arm64) and sqlmap (Python). install.sh/ps1 wires the ones matching
+  your machine onto PATH automatically. See tools/THIRD_PARTY_TOOLS.txt.
 
-NOT INCLUDED (optional, large, platform-specific — the tool runs fine without them)
-  External CLIs: subfinder, ffuf, nuclei, sqlmap  (install separately to enable
-  those phases). The Playwright browser (for the live-browser XSS/login checks)
-  and mitmproxy (passive capture). Everything else works without these.
+NOT INCLUDED (optional, very large/awkward to bundle)
+  The Playwright browser (for the live-browser XSS/login checks) and mitmproxy
+  (passive capture). The tool runs fine without these; install them separately to
+  enable those two checks. nuclei is bundled WITHOUT its template set — run
+  'nuclei -update-templates' once online, or rely on R2R's built-in fast tags.
+
+SIZE NOTE: with the external tools bundled this folder is ~750 MB, which is
+LARGER than a 700 MB CD. Use a DVD or a USB stick. To fit a CD, rebuild with
+R2R_SKIP_TOOLS=1 (Python-only, ~150 MB) and install the CLIs separately.
 
 NOTE: wheels are bundled for Linux/Windows/macOS on Python 3.10–3.13. If your
 exact Python/OS combo isn't covered, install.sh/ps1 falls back to building from
